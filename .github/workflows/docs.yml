@@ -1,0 +1,36 @@
+name: Docs
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Typedoc
+        run: |
+          npx typedoc \
+            --tsconfig tsconfig.json \
+            --entryPoints "packages/*/src" \
+            --out docs \
+            --exclude "**/*.test.ts" \
+            --exclude "**/node_modules/**"
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs
