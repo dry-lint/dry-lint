@@ -1,0 +1,34 @@
+{
+  "name": "@dry-lint/integration-tests",
+  "version": "1.0.0",
+  "dependencies": {
+    "@dry-lint/core": "1.0.0"
+  },
+  "devDependencies": {
+    "@dry-lint/core": "workspace:*",
+    "@dry-lint/typescript": "workspace:*",
+    "@dry-lint/zod": "workspace:*",
+    "@types/node": "^24.0.10",
+    "eslint": "^9.30.1",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.js",
+  "private": false,
+  "scripts": {
+    "build": "tsc -b",
+    "check-types": "tsc -b --noEmit",
+    "clean": "rimraf dist",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "vitest",
+    "test:ci": "vitest run"
+  },
+  "types": "dist/index.d.ts"
+}
