@@ -26,5 +26,5 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest"
   },
-  "types": "dist/index.d.ts"
+  "types": "./src/index.ts"
 }

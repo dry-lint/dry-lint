@@ -21,7 +21,6 @@ jobs:
       - name: Generate Typedoc
         run: |
           bunx typedoc \
-            --tsconfig tsconfig.json \
             --entryPoints "packages/*/src" \
             --out docs \
             --exclude "**/*.test.ts" \
