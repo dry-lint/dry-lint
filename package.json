@@ -1,22 +1,37 @@
 {
   "name": "dry-lint",
+  "devDependencies": {
+    "@changesets/cli": "^2.29.5",
+    "husky": "^9.1.7",
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "bun@1.2.17",
   "private": true,
   "scripts": {
     "build": "turbo run build",
+    "changeset": "changeset",
+    "changeset:publish": "changeset publish",
+    "changeset:version": "changeset version",
+    "check-types": "turbo run check-types",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint -- --fix",
+    "prepare": "husky",
+    "test": "vitest run",
+    "test:ci": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest"
   },
-  "devDependencies": {
-    "prettier": "^3.6.0",
-    "turbo": "^2.5.4",
-    "typescript": "5.8.2"
-  },
-  "engines": {
-    "node": ">=18"
-  },
-  "packageManager": "bun@1.2.17",
+  "trustedDependencies": [
+    "protobufjs"
+  ],
   "workspaces": [
     "apps/*",
     "packages/*"

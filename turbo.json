@@ -3,19 +3,52 @@
   "ui": "tui",
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
-    },
-    "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*"
+      ],
+      "outputs": [
+        "packages/*/dist/**"
+      ]
     },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": [
+        "^check-types"
+      ],
+      "outputs": []
+    },
+    "lint": {
+      "dependsOn": [
+        "^lint"
+      ],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": [
+        "build",
+        "^test"
+      ],
+      "outputs": []
     },
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "version": {
+      "dependsOn": [
+        "build",
+        "^version"
+      ],
+      "outputs": []
+    },
+    "publish": {
+      "dependsOn": [
+        "version"
+      ],
+      "outputs": []
     }
   }
 }
