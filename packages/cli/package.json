@@ -1,9 +1,6 @@
 {
   "name": "@dry-lint/cli",
   "version": "1.0.0",
-  "bin": {
-    "dry": "dist/bin/dry.js"
-  },
   "dependencies": {
     "@dry-lint/core": "1.0.0",
     "commander": "^14.0.0",
@@ -30,6 +27,9 @@
   ],
   "main": "dist/index.js",
   "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -b",
     "check-types": "tsc -b --noEmit",

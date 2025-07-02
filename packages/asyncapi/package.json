@@ -21,6 +21,9 @@
   ],
   "main": "dist/index.js",
   "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -b",
     "check-types": "tsc -b --noEmit",
