@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="WEB_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/.tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/temp" />
+      <excludeFolder url="file://$MODULE_DIR$/tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/asyncapi/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/avro/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/cli/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/cloudformation/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/core/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/css/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/graphql/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/json/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/k8s/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/mongoose/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/openapi/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/prisma/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/prop-types/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/proto/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/sql/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/terraform/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/thrift/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/typeorm/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/typescript/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/xsd/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/zod/.turbo" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
