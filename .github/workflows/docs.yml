@@ -3,7 +3,7 @@ name: Docs
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   docs:
@@ -21,11 +21,11 @@ jobs:
       - name: Generate Typedoc
         run: |
           bunx typedoc \
-            --entryPoints "packages/*/src" \
-            --entryPointStrategy expand \  
+            --entryPoints packages/* \
+            --entryPointStrategy packages \
             --out docs \
-            --exclude "**/*.test.ts" \
-            --exclude "**/node_modules/**"
+            --exclude '**/*.test.ts' \
+            --exclude '**/node_modules/**'
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
