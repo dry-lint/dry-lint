@@ -4,9 +4,9 @@ import * as path from 'path';
 export default defineConfig({
   resolve: {
     alias: {
-      '@dry-lint/core': path.resolve(__dirname, 'packages/core/src/index.test.ts'),
-      '@dry-lint/typescript': path.resolve(__dirname, 'packages/typescript/src/index.test.ts'),
-      '@dry-lint/zod': path.resolve(__dirname, 'packages/zod/src/index.test.ts'),
+      '@dry-lint/core': path.resolve(__dirname, 'packages/core/src/index.ts'),
+      '@dry-lint/typescript': path.resolve(__dirname, 'packages/typescript/src/index.ts'),
+      '@dry-lint/zod': path.resolve(__dirname, 'packages/zod/src/index.ts'),
     },
   },
   test: {
