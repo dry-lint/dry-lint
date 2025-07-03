@@ -8,186 +8,128 @@
 [![docs](https://img.shields.io/badge/docs-%E2%9C%93-blue)](https://dry-lint.github.io/dry-lint/)  
 [![license](https://img.shields.io/npm/l/@dry-lint/cli)](LICENSE)
 
-A plugin-driven duplicate declaration detection framework for TypeScript and Zod. This monorepo contains:
+`dry-lint` is a **plugin‑driven** framework for detecting duplicate or overlapping declarations across _any_ source format – TypeScript, JSON, SQL, Terraform, OpenAPI, … you name it.
 
-- **dry-core**: The shared engine for extracting, normalizing, hashing, and grouping any kind of declaration.
-- **typescript-dry**: A plugin that registers TypeScript AST extractors (interfaces, types, enums).
-- **zod-dry**: A plugin that registers Zod schema extractors (`z.object()`, `z.enum()`, etc.).
-- **cli**: A user-friendly CLI (`dry`) and optional Ink UI for interactive exploration.
+- **Core** – normalises, hashes, and groups declarations.
+- **CLI** – fast, cached, and interactive (`npx dry`).
+- **Extractors** – small packages (plugins) you add only when you need them.
 
-> **Efficiency**: incremental file caching, parallel AST parsing, and optional fuzzy grouping.
+> ⚡ **Performance‑first:** incremental file caching, parallel parsing, and optional fuzzy grouping.
 
 ---
 
 ## 📦 Packages
 
-| Package               | npm Name                      | Description                                |
-| --------------------- | ----------------------------- | ------------------------------------------ |
-| **asyncapi**          | `@dry-lint/asyncapi`          | AsyncAPI specification extractor           |
-| **avro**              | `@dry-lint/avro`              | Avro schema extractor                      |
-| **cloudformation**    | `@dry-lint/cloudformation`    | AWS CloudFormation template extractor      |
-| **core**              | `@dry-lint/core`              | Core engine & API (registration, grouping) |
-| **css**               | `@dry-lint/css`               | CSS style rule extractor                   |
-| **eslint-config**     | `@dry-lint/eslint-config`     | Shared ESLint configurations               |
-| **graphql**           | `@dry-lint/graphql`           | GraphQL schema extractor                   |
-| **integration-tests** | `@dry-lint/integration-tests` | End-to-end integration test harness        |
-| **json**              | `@dry-lint/json`              | JSON structure extractor                   |
-| **k8s**               | `@dry-lint/k8s`               | Kubernetes manifest extractor              |
-| **mongoose**          | `@dry-lint/mongoose`          | Mongoose schema extractor                  |
-| **openapi**           | `@dry-lint/openapi`           | OpenAPI/Swagger spec extractor             |
-| **prisma**            | `@dry-lint/prisma`            | Prisma schema extractor                    |
-| **prop-types**        | `@dry-lint/prop-types`        | React PropTypes extractor                  |
-| **proto**             | `@dry-lint/proto`             | Protobuf IDL extractor                     |
-| **sql**               | `@dry-lint/sql`               | SQL DDL extractor                          |
-| **terraform**         | `@dry-lint/terraform`         | Terraform HCL plugin extractor             |
-| **thrift**            | `@dry-lint/thrift`            | Thrift IDL extractor                       |
-| **typeorm**           | `@dry-lint/typeorm`           | TypeORM entity extractor                   |
-| **typescript**        | `@dry-lint/typescript`        | TypeScript AST extractor                   |
-| **typescript-config** | `@dry-lint/typescript-config` | Shared TypeScript configuration            |
-| **xsd**               | `@dry-lint/xsd`               | XML Schema (XSD) extractor                 |
-| **zod**               | `@dry-lint/zod`               | Zod schema extractor                       |
+| Package        | npm                        | What it extracts                |
+|----------------|----------------------------|---------------------------------|
+| core           | `@dry-lint/core`           | Engine & public API             |
+| cli            | `@dry-lint/cli`            | Command‑line interface & Ink UI |
+| asyncapi       | `@dry-lint/asyncapi`       | AsyncAPI operations & schemas   |
+| avro           | `@dry-lint/avro`           | Avro records / enums / unions   |
+| cloudformation | `@dry-lint/cloudformation` | CloudFormation stacks           |
+| css            | `@dry-lint/css`            | CSS selectors & variables       |
+| graphql        | `@dry-lint/graphql`        | GraphQL types & operations      |
+| json           | `@dry-lint/json`           | Generic JSON shapes             |
+| k8s            | `@dry-lint/k8s`            | Kubernetes manifests            |
+| mongoose       | `@dry-lint/mongoose`       | Mongoose models                 |
+| openapi        | `@dry-lint/openapi`        | OpenAPI operations & schemas    |
+| prisma         | `@dry-lint/prisma`         | Prisma models                   |
+| prop‑types     | `@dry-lint/prop-types`     | React PropTypes                 |
+| proto          | `@dry-lint/proto`          | Protocol‑Buffers IDL            |
+| sql            | `@dry-lint/sql`            | SQL DDL (tables, indexes)       |
+| terraform      | `@dry-lint/terraform`      | Terraform HCL                   |
+| thrift         | `@dry-lint/thrift`         | Thrift IDL                      |
+| typeorm        | `@dry-lint/typeorm`        | TypeORM entities                |
+| typescript     | `@dry-lint/typescript`     | TS interfaces / types / enums   |
+| xsd            | `@dry-lint/xsd`            | XML Schema                      |
+| zod            | `@dry-lint/zod`            | Zod validators                  |
 
-All packages live under `packages/` and are published separately under the `@dry-lint` scope.
+> All extractor packages live under `packages/` and are published under the `@dry-lint` scope.
 
 ---
 
-## 🚀 Getting Started
-
-Clone the monorepo:
+## 🚀 Quick start
 
 ```bash
-git clone https://github.com/dry-lint/dry-lint.git
-cd dry-lint
+# 1 – install cli + the plugins you need
+bun add -D @dry-lint/cli \
+           @dry-lint/typescript \
+           @dry-lint/zod
+
+# 2 – tell dry‑lint which plugins to load
+echo '{ "plugins": ["@dry-lint/typescript", "@dry-lint/zod"] }' > .drylintrc.json
+
+# 3 – run it
+npx dry src/  # or just `npx dry` for the current folder
 ```
 
-Install dependencies (using your preferred package manager):
+### CLI flags
 
-```bash
-# If you use bun:
-bun install
+| Flag               | Description                            |
+|--------------------|----------------------------------------|
+| `-t, --threshold`  | Similarity threshold (0‑1, default 1)  |
+| `--ignore`         | Glob patterns to exclude               |
+| `--json / --sarif` | Machine‑readable reports               |
+| `--fix`            | Generate alias stubs for exact matches |
+| `--no-cache`       | Disable file‑level caching             |
+| `--ui`             | Launch interactive Ink UI              |
 
-# Or with npm
-npm ci
-
-# Or with Yarn
-yarn install
-```
+If **no `.drylintrc`** is found, the CLI falls back to _auto‑discovering_ every installed `@dry-lint/*` package (except `core` & `cli`).
 
 ---
 
-## 🛠 CLI Usage
-
-Install the CLI globally (or as a dev dependency):
-
-```bash
-npm install -g @dry-lint/cli
-# or
-yarn global add @dry-lint/cli
-# or
-bun add -g @dry-lint/cli
-```
-
-Run duplicate detection across your TS/Zod files:
-
-```bash
-dry [projectDir] [options]
-```
-
-### Options
-
-- `-t, --threshold <num>` — similarity threshold (0–1, default `1`).
-- `--ignore <patterns...>` — glob patterns to skip.
-- `--json` — output JSON report.
-- `--sarif` — output SARIF report.
-- `--out <file>` — write report to file.
-- `--fix` — generate alias stub file for exact matches.
-- `--no-cache` — disable file-level caching.
-- `--ui` — launch interactive Ink UI.
-
----
-
-## 📚 API (dry-core)
+## 📚 Using the Core API
 
 ```ts
-import { findDuplicates } from '@dry-lint/core';
+import { registerExtractor, findDuplicates, Declaration } from '@dry-lint/core';
 
-const groups = findDuplicates(filePaths, {
-  threshold: 0.8,
-  json: false,
-  sarif: false,
-  outFile: 'report.json',
+registerExtractor((filePath, text): Declaration[] => {
+  /* …return your declarations… */
+  return [];
 });
+
+const results = findDuplicates(['src/**/*.ts']);
+console.log(results);
 ```
 
-- **`findDuplicates(files, options)`**: runs all registered extractors, groups duplicates, and reports.
-- **`registerExtractor(fn)`**: plugin hook to add new extractors before you call `findDuplicates`.
+See the [Writing a Plugin](#-writing-a-plugin) section below for more detail.
 
 ---
 
 ## 🔌 Writing a Plugin
 
-1. Create a new package (e.g. `packages/my-plugin`).
-2. Depend on `@dry-lint/core`.
-3. Call `registerExtractor((filePath, fileText) => Declaration[])` in your entrypoint.
-4. Export your AST or normalized shape logic.
-5. Import your plugin in the CLI entrypoint or any consumer.
-
-**Example (TypeScript plugin):**
+1. `bun add -D @dry-lint/core` in a new package under `packages/`.
+2. Implement `registerExtractor` in your entrypoint.
+3. Publish as `@dry-lint/my‑plugin`. ✅ That’s it – users list it in `.drylintrc.json`.
 
 ```ts
-import { Project } from 'ts-morph';
 import { registerExtractor, Declaration } from '@dry-lint/core';
 
-registerExtractor((filePath, text) => {
-  const project = new Project({ useInMemoryFileSystem: true });
-  const sf = project.createSourceFile(filePath, text);
-  return sf.getInterfaces().map(i => ({
-    id: `${filePath}#${i.getName()}`,
-    kind: 'ts-interface',
-    shape: normalizeInterface(i),
-    location: { file: filePath, name: i.getName() },
-  }));
+registerExtractor((filePath, source): Declaration[] => {
+  // analyse source → return custom Declaration objects
+  return [];
 });
 ```
 
 ---
 
-## 📦 Workspace & Build
+## 🏗 Workspace & Build
 
-We use Turborepo for fast, cached pipelines.
-
-**`turbo.json`** (excerpt):
-
-```jsonc
-{
-  "tasks": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["packages/*/dist/**"],
-    },
-    "test": {
-      "dependsOn": ["^test"],
-      "outputs": [],
-    },
-  },
-}
-```
-
-Run builds & tests across all packages:
+We use **Turborepo** for fast, cached pipelines.
 
 ```bash
-bun run build
-bun run test   # this will invoke `vitest run` in each package
+bun run build   # builds every package (cache‑aware)
+bun run test    # runs Vitest across the monorepo
 ```
 
 ---
 
 ## 🤝 Contributing
 
-1. Fork the repo and create your branch.
-2. Add or update an extractor plugin under `packages/`.
-3. Update docs and add tests.
-4. Submit a PR — CI will build, lint, and test all packages automatically.
+1. Fork, then create a feature branch.
+2. Add or update a plugin under `packages/`.
+3. Update docs & add tests.
+4. Open a PR – the CI will run builds, lint, and tests.
 
 ---
 

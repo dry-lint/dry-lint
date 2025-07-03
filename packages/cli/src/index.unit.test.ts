@@ -1,10 +1,9 @@
-// packages/cli/src/cli.unit.test.ts
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import fs from 'fs';
 import { Stats } from 'fs';
 
 /* ────────────────────────────────────────────────────────────
-   1.  Stub external deps BEFORE importing cli.tsx
+   1.  Stub external deps BEFORE importing index.tsx
    ──────────────────────────────────────────────────────────── */
 vi.mock('globby', () => ({ globby: vi.fn(async () => []) }));
 vi.mock('@dry-lint/core', () => ({
@@ -26,7 +25,7 @@ vi.mock('@dry-lint/core', () => {
 /* ────────────────────────────────────────────────────────────
    2.  Import cli AFTER mocks so it uses them
    ──────────────────────────────────────────────────────────── */
-import * as cli from './cli.js';
+import * as cli from './index.js';
 import * as ink from 'ink';
 const { globby } = await import('globby');
 const { findDuplicates } = await import('@dry-lint/core');
@@ -71,7 +70,7 @@ afterEach(() => vi.restoreAllMocks());
 /* ────────────────────────────────────────────────────────────
    4.  Tests that hit all uncovered branches
    ──────────────────────────────────────────────────────────── */
-describe('cli.tsx internal coverage', () => {
+describe('index.tsx internal coverage', () => {
   it('invokes Ink UI when --ui is supplied', async () => {
     const renderSpy = vi.spyOn(ink, 'render');
     await cli.run(['.', '--ui']);
@@ -98,7 +97,7 @@ describe('cli.tsx internal coverage', () => {
     Object.defineProperty(import.meta, 'main', { value: true });
 
     // 3. Import cli *after* we set meta.main
-    const freshCli = await import('./cli.js'); // query string forces a fresh instance
+    const freshCli = await import('./index.js'); // query string forces a fresh instance
 
     // 4. Spy on run (it was already executed at top level)
     expect(typeof freshCli.run).toBe('function');
