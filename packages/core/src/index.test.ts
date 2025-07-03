@@ -1,41 +1,51 @@
-import type { Declaration } from './index';
-import { groupDeclarations } from './index';
-import { describe, expect, it } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { groupDeclarations, type Declaration } from './index.js';
+
+const make = (id: string, shape: any): Declaration => ({
+  id,
+  kind: 'unit-test',
+  shape,
+  location: { file: `${id}.ts`, name: id },
+});
 
 /**
- * Unit tests for the groupDeclarations function in core module.
+ * Unit-tests for the pure `groupDeclarations` algorithm.
+ * – Focus on edge-cases and branch coverage (fuzzy threshold logic).
  */
-describe('core: groupDeclarations', () => {
-  it('detects exact duplicates based on identical shapes', () => {
-    // Prepare declarations with two identical shapes and one distinct
-    const decls: Declaration[] = [
-      { id: 'a', kind: 'test', shape: { foo: 1 }, location: { file: 'f1', name: 'n1' } },
-      { id: 'b', kind: 'test', shape: { foo: 1 }, location: { file: 'f2', name: 'n2' } },
-      { id: 'c', kind: 'test', shape: { bar: 2 }, location: { file: 'f3', name: 'n3' } },
-    ];
+describe('core › groupDeclarations', () => {
+  it('returns one group for N ≥ 2 identical shapes (similarity 1)', () => {
+    const decls = [make('a', { foo: 1 }), make('b', { foo: 1 }), make('c', { bar: 2 })];
+    const out = groupDeclarations(decls);
+    expect(out).toHaveLength(1);
+    expect(out[0]!.similarity).toBe(1);
 
-    // Group declarations; expect one duplicate group (a & b)
-    const groups = groupDeclarations(decls);
-    expect(groups).toHaveLength(1);
-
-    const group = groups[0]!;
-    // Similarity should be 100% for exact matches
-    expect(group.similarity).toBe(1);
-
-    // IDs in the group should include only the duplicates
-    const ids = group.decls.map(d => d.id).sort();
+    const ids = out[0]!.decls.map(d => d.id).sort();
     expect(ids).toEqual(['a', 'b']);
   });
 
-  it('returns no groups when all shapes are unique', () => {
-    // Prepare declarations with distinct shapes
-    const decls: Declaration[] = [
-      { id: 'x', kind: 'test', shape: { x: 1 }, location: { file: 'x1', name: 'x1' } },
-      { id: 'y', kind: 'test', shape: { y: 2 }, location: { file: 'y1', name: 'y1' } },
-    ];
+  it('returns 0 groups when every shape hash is unique', () => {
+    const decls = [make('x', { x: 1 }), make('y', { y: 2 })];
+    expect(groupDeclarations(decls)).toHaveLength(0);
+  });
 
-    // Group declarations; expect no duplicate groups
-    const groups = groupDeclarations(decls);
-    expect(groups).toHaveLength(0);
+  it('detects *fuzzy* duplicates when threshold < 1', () => {
+    /*
+     * Two shapes share 15/20 hex chars → intersection 15, union 25 ⇒ 0.6.
+     * (The exact math isn’t important, we just need a pair with sim ≈ 0.6).
+     */
+    const shapeA = { a: 1, b: 2, c: 3 };
+    const shapeB = { a: 1, b: 2, c: 3, d: 4 }; // superset → very similar
+
+    const out = groupDeclarations([make('a', shapeA), make('b', shapeB)], 0.5);
+    expect(out).toHaveLength(1);
+    expect(out[0]!.similarity).toBeGreaterThan(0.5);
+    expect(out[0]!.similarity).toBeLessThan(1);
+  });
+
+  it('does **not** group fuzzy matches below the given threshold', () => {
+    const shapeA = { foo: 1 };
+    const shapeB = { bar: 2 };
+    const out = groupDeclarations([make('a', shapeA), make('b', shapeB)], 0.99);
+    expect(out).toHaveLength(0);
   });
 });

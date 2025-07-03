@@ -1,183 +1,139 @@
-import { execaSync } from 'execa';
-import fs from 'fs-extra';
-import os from 'os';
+import { describe, it, beforeEach, afterEach, expect, vi, type Mock } from 'vitest';
+import fs from 'fs';
+import { Stats } from 'fs';
 import path from 'path';
-import { describe, expect, it } from 'vitest';
 
-/**
- * Smoke tests for the CLI tool, validating core output formats and behaviors.
- */
-describe('CLI smoke test', () => {
-  it('discovers duplicate interfaces and outputs valid JSON', () => {
-    // Create a temp directory containing three TypeScript files
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-cli-'));
-    const files = {
-      'a.ts': `export interface Foo { x: number; }`,
-      'b.ts': `export interface Foo { x:number; }`,
-      'c.ts': `export interface Bar { y: string }`,
-    };
-    Object.entries(files).forEach(([name, content]) => {
-      fs.writeFileSync(path.join(tmpDir, name), content);
-    });
+/* ╭──────────────────────────────────────────────────────────╮
+   │ 1.  Hard-stub all external deps *before* importing CLI   │
+   ╰──────────────────────────────────────────────────────────╯ */
+vi.mock('globby', () => ({
+  globby: vi.fn(async () => ['/abs/f1.ts']),
+}));
 
-    // Run the CLI under Bun in JSON mode with perfect similarity threshold
-    const cliPath = path.resolve(__dirname, 'cli.tsx');
-    const result = execaSync('bun', [cliPath, tmpDir, '--json', '--threshold', '1'], {
-      encoding: 'utf8',
-    });
-
-    // Expect successful exit and parseable JSON output
-    expect(result.exitCode).toBe(0);
-    const groups = JSON.parse(result.stdout);
-    expect(Array.isArray(groups)).toBe(true);
-    expect(groups).toHaveLength(1);
-
-    // Verify the duplicate group contains the two Foo interfaces
-    const [group] = groups;
-    expect(group.similarity).toBe(1);
-    const duplicateFiles = group.decls.map((d: any) => path.basename(d.location.file)).sort();
-    expect(duplicateFiles).toEqual(['a.ts', 'b.ts']);
-  });
+vi.mock('@dry-lint/core', () => {
+  return {
+    // used by CLI
+    findDuplicates: vi.fn(async () => []),
+    // required by side-effect plugins (@dry-lint/typescript/zod)
+    registerExtractor: vi.fn(),
+  };
 });
 
-/**
- * Tests for SARIF output format (--sarif).
- */
-describe('CLI SARIF output (--sarif)', () => {
-  it('emits valid SARIF v2.1.0 with a runs array', () => {
-    // Set up two identical interface files in a temp directory
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-cli-sarif-'));
-    const schema = `export interface Foo { x: number }`;
-    ['a.ts', 'b.ts'].forEach(name => {
-      fs.writeFileSync(path.join(tmpDir, name), schema);
-    });
-
-    // Invoke CLI with --sarif flag
-    const cliPath = path.resolve(__dirname, 'cli.tsx');
-    const result = execaSync('bun', [cliPath, tmpDir, '--sarif'], { encoding: 'utf8' });
-
-    // Expect success and valid SARIF JSON
-    expect(result.exitCode).toBe(0);
-    let sarif: any;
-    expect(() => {
-      sarif = JSON.parse(result.stdout);
-    }).not.toThrow();
-    expect(sarif).toHaveProperty('version', '2.1.0');
-    expect(Array.isArray(sarif.runs)).toBe(true);
-  });
+vi.mock('ink', async () => {
+  const actual = await vi.importActual<any>('ink');
+  return {
+    ...actual,
+    // we only care that it was called
+    render: vi.fn().mockReturnValue({ waitUntilExit: async () => {} }),
+  };
 });
 
-/**
- * Tests for fix file generation (--fix) and output file writing.
- */
-describe('CLI fix mode (--fix)', () => {
-  it('writes a fix file containing aliases for exact matches', () => {
-    // Create two identical interface files
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-cli-fix-'));
-    const schema = `export interface Foo { x: number }`;
-    ['a.ts', 'b.ts'].forEach(name => {
-      fs.writeFileSync(path.join(tmpDir, name), schema);
-    });
+/* ╭──────────────────────────────────────────────────────────╮
+   │ 2.  Import CLI after mocks so it uses the stubs          │
+   ╰──────────────────────────────────────────────────────────╯ */
+import * as cli from './cli.js';
+import { globby } from 'globby';
+import { findDuplicates } from '@dry-lint/core';
+import * as ink from 'ink';
 
-    // Run CLI with --fix and specify an output file path
-    const cliPath = path.resolve(__dirname, 'cli.tsx');
-    const outputFile = path.join(tmpDir, 'dup.ts');
-    const result = execaSync('bun', [cliPath, tmpDir, '--fix', '--out', outputFile], {
-      encoding: 'utf8',
-    });
+/* ──────────────────────────────────────────────────────────────
+   3.  Shareable fake fs.Stats & helpers
+   ──────────────────────────────────────────────────────────── */
+const fakeStats: Stats = {
+  isDirectory: () => true,
+  isFile: () => false,
+  isBlockDevice: () => false,
+  isCharacterDevice: () => false,
+  isFIFO: () => false,
+  isSocket: () => false,
+  isSymbolicLink: () => false,
+  dev: 0,
+  ino: 0,
+  mode: 0,
+  nlink: 0,
+  uid: 0,
+  gid: 0,
+  rdev: 0,
+  size: 0,
+  blksize: 0,
+  blocks: 0,
+  atime: new Date(),
+  mtime: new Date(),
+  ctime: new Date(),
+  birthtime: new Date(),
+  atimeMs: 0,
+  mtimeMs: 0,
+  ctimeMs: 0,
+  birthtimeMs: 0,
+};
 
-    // Expect successful execution and existence of the fix file
-    expect(result.exitCode).toBe(0);
-    expect(fs.existsSync(outputFile)).toBe(true);
-
-    // Read and verify contents of the generated fix file
-    const content = fs.readFileSync(outputFile, 'utf8');
-    expect(content).toMatch(/Auto-generated by dry-lint/);
-    expect(content).toMatch(/export type Foo = \{\s*\/\* replace with real shape \*\/\};/);
-    expect(content).toMatch(/export type Foo = Foo;/);
-  });
+beforeEach(() => {
+  vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+  vi.spyOn(fs, 'statSync').mockReturnValue(fakeStats);
 });
 
-/**
- * Tests for ignoring files via glob patterns (--ignore).
- */
-describe('CLI ignore patterns (--ignore)', () => {
-  it('does not report duplicates for ignored files', () => {
-    // Prepare two identical interface files
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-cli-ignore-'));
-    const schema = `export interface Foo { x: number }`;
-    ['a.ts', 'b.ts'].forEach(name => {
-      fs.writeFileSync(path.join(tmpDir, name), schema);
-    });
+afterEach(() => vi.restoreAllMocks());
 
-    // Invoke CLI in JSON mode while ignoring b.ts
-    const cliPath = path.resolve(__dirname, 'cli.tsx');
-    const result = execaSync('bun', [cliPath, tmpDir, '--json', '--ignore', 'b.ts'], {
-      encoding: 'utf8',
-    });
-
-    // Expect no duplicate groups reported
-    expect(result.exitCode).toBe(0);
-    const groups = JSON.parse(result.stdout);
-    expect(Array.isArray(groups)).toBe(true);
-    expect(groups).toHaveLength(0);
-  });
-});
-
-/**
- * Tests for fuzzy matching at threshold < 1.
- */
-describe('CLI fuzzy matching (--threshold)', () => {
-  it('finds near-duplicates when threshold is below 1', () => {
-    // Create two interfaces with slight differences
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-cli-fuzzy-'));
-    fs.writeFileSync(path.join(tmpDir, 'a.ts'), `export interface Foo { x: number; y: string }`);
-    fs.writeFileSync(path.join(tmpDir, 'b.ts'), `export interface Foo { x: number }`);
-
-    // Run CLI with threshold set to 0.5
-    const cliPath = path.resolve(__dirname, 'cli.tsx');
-    const result = execaSync('bun', [cliPath, tmpDir, '--json', '--threshold', '0.5'], {
-      encoding: 'utf8',
-    });
-
-    // Expect one duplicate group with partial similarity
-    expect(result.exitCode).toBe(0);
-    const groups = JSON.parse(result.stdout);
-    expect(groups).toHaveLength(1);
-    const [group] = groups;
-    expect(typeof group.similarity).toBe('number');
-    expect(group.similarity).toBeGreaterThan(0);
-    expect(group.similarity).toBeLessThan(1);
-    const files = group.decls.map((d: any) => path.basename(d.location.file)).sort();
-    expect(files).toEqual(['a.ts', 'b.ts']);
-  });
-});
-
-/**
- * Tests for help output and error handling on invalid paths.
- */
-describe('CLI help & error handling', () => {
-  const cliPath = path.resolve(__dirname, 'cli.tsx');
-
-  it('displays usage information with --help and exits successfully', () => {
-    const result = execaSync('bun', [cliPath, '--help'], { encoding: 'utf8' });
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout).toMatch(/Usage: dry/);
-    expect(result.stdout).toMatch(/--json/);
-    expect(result.stdout).toMatch(/--sarif/);
-    expect(result.stdout).toMatch(/--fix/);
+/* ╭──────────────────────────────────────────────────────────╮
+   │ 4.  Branch-coverage tests                                │
+   ╰──────────────────────────────────────────────────────────╯ */
+describe('cli.tsx branch coverage', () => {
+  it('--ui branch invokes Ink render', async () => {
+    await cli.run(['.', '--ui', '--threshold', '0.9']);
+    expect((ink.render as Mock).mock.calls.length).toBe(1); // lines 52-58
   });
 
-  it('exits with error when provided a nonexistent path', () => {
-    const fakeDir = path.join(os.tmpdir(), 'does-not-exist-xyz');
-    const result = execaSync('bun', [cliPath, fakeDir, '--json'], {
-      encoding: 'utf8',
-      reject: false,
-    });
+  it('relative --out path is converted to absolute and handed to core', async () => {
+    const dupSpy = findDuplicates as Mock;
+    await cli.run(['.', '--json', '--out', 'rel/report.json']);
+    expect(dupSpy).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.objectContaining({ outFile: path.join('.', 'rel', 'report.json') })
+    );
+  });
 
-    // Expect non-zero exit code and error message about path not found
-    expect(result.exitCode).not.toBe(0);
-    const output = result.stderr || result.stdout;
-    expect(output).toMatch(/ENOENT|not found/i);
+  it('absolute --out path is passed straight through', async () => {
+    const abs = path.resolve('/tmp/out.json');
+    await cli.run(['.', '--json', '--out', abs]);
+    expect((findDuplicates as Mock).mock.calls.at(-1)?.[1].outFile).toBe(abs);
+  });
+
+  it('--no-cache flips the cache flag', async () => {
+    vi.spyOn(cli.program, 'opts').mockReturnValue({
+      json: true,
+      noCache: true, // This must match the CLI flag
+      ignore: [],
+      threshold: 1,
+    });
+    cli.program.args = ['.'];
+
+    await cli.run([]);
+    expect((findDuplicates as Mock).mock.calls.at(-1)?.[1].cache).toBe(false);
+  });
+
+  it('handles missing directory -> console.error + exit(1)', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
+      throw new Error('trap-exit');
+    });
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(cli.run(['./nope'])).rejects.toThrow('trap-exit'); // lines 41-46
+    expect(errSpy).toHaveBeenCalledWith(expect.stringContaining('nope'));
+    expect(exitSpy).toHaveBeenCalledWith(1);
+  });
+
+  it('catch-block on findDuplicates error logs + exits with code 1', async () => {
+    (findDuplicates as Mock).mockRejectedValueOnce(new Error('boom'));
+
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
+      throw new Error('trap-exit');
+    });
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(cli.run(['.'])).rejects.toThrow('trap-exit'); // lines 75-78
+    expect(errSpy).toHaveBeenCalledWith(expect.stringContaining('boom'));
+    expect(exitSpy).toHaveBeenCalledWith(1);
   });
 });

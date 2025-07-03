@@ -1,57 +1,123 @@
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
-import { describe, expect, it } from 'vitest';
-import '../src/index';
-import { findDuplicates } from '@dry-lint/core';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-/**
- * Test suite for the Mongoose schema extractor plugin.
- * Validates extraction of @Schema-decorated classes and duplicate detection.
- */
-describe('Mongoose plugin', () => {
-  it('extracts a @Schema class with @Prop properties', async () => {
-    // Create a temporary directory and write a TypeScript file
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-mongoose-'));
-    const code = `
-      import { Schema, Prop } from "nestjs/mongoose";
-      @Schema()
-      class User {
-        @Prop() name: string;
-        @Prop() age: number;
-      }
-    `;
-    const filePath = path.join(tmpDir, 'user.ts');
-    fs.writeFileSync(filePath, code);
+// helpers
+const mkTmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'mongoose-'));
+const write = (dir: string, name: string, code: string) =>
+  fs.writeFileSync(path.join(dir, name), code);
 
-    // Run duplicate detection on the file; expect no duplicates since only one schema
-    const groups = await findDuplicates([filePath], { threshold: 1, json: true });
+// lazy-load extractor
+const load = async () => {
+  await import('./index.js');
+  const { findDuplicates } = await import('@dry-lint/core');
+  return findDuplicates;
+};
+
+describe('Mongoose schema extractor', () => {
+  afterEach(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+  });
+
+  it('ignores classes without @Schema decorator', async () => {
+    const dir = mkTmp();
+    write(
+      dir,
+      'no-schema.ts',
+      `
+      import { Prop } from "nestjs/mongoose";
+      class Unrelated { @Prop() x: string; }
+    `
+    );
+    const groups = await (
+      await load()
+    )([path.join(dir, 'no-schema.ts')], {
+      threshold: 1,
+      json: true,
+    });
     expect(groups).toHaveLength(0);
   });
 
-  it('detects duplicate @Schema classes across multiple files', async () => {
-    // Create a temp directory and two identical schema files
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-mongoose-dup-'));
-    const snippet = `
+  it('extracts a schema class even if it has no @Prop properties', async () => {
+    const dir = mkTmp();
+    write(
+      dir,
+      'empty.ts',
+      `
+      import { Schema } from "nestjs/mongoose";
+      @Schema()
+      class Empty {}
+    `
+    );
+    const groups = await (
+      await load()
+    )([path.join(dir, 'empty.ts')], {
+      threshold: 1,
+      json: true,
+    });
+    expect(groups).toHaveLength(0); // one declaration but no duplicates
+  });
+
+  it('treats properties without type annotation as any', async () => {
+    const dir = mkTmp();
+    write(
+      dir,
+      'anytype.ts',
+      `
       import { Schema, Prop } from "nestjs/mongoose";
       @Schema()
-      class Foo { @Prop() x: number; }
+      class A {
+        @Prop() z;
+      }
+    `
+    );
+    const groups = await (
+      await load()
+    )([path.join(dir, 'anytype.ts')], {
+      threshold: 1,
+      json: true,
+    });
+    expect(groups).toHaveLength(0);
+  });
+
+  it('processes multiple classes but only decorated ones', async () => {
+    const dir = mkTmp();
+    write(
+      dir,
+      'multi.ts',
+      `
+      import { Schema, Prop } from "nestjs/mongoose";
+      @Schema() class First { @Prop() a: number; }
+      class Second { @Prop() b: string; }
+      @Schema() class Third {}
+    `
+    );
+    const groups = await (
+      await load()
+    )([path.join(dir, 'multi.ts')], {
+      threshold: 1,
+      json: true,
+    });
+    expect(groups).toHaveLength(0);
+  });
+
+  it('detects duplicate schemas across files', async () => {
+    const dir = mkTmp();
+    const snippet = `
+      import { Schema, Prop } from "nestjs/mongoose";
+      @Schema() class Foo { @Prop() x: number; }
     `;
-    const fileA = path.join(tmpDir, 'a.ts');
-    const fileB = path.join(tmpDir, 'b.ts');
-    fs.writeFileSync(fileA, snippet);
-    fs.writeFileSync(fileB, snippet);
+    write(dir, 'a.ts', snippet);
+    write(dir, 'b.ts', snippet);
 
-    // Run duplicate detection at full threshold
-    const groups = await findDuplicates([fileA, fileB], { threshold: 1, json: true });
-
-    // Expect exactly one duplicate group with both Foo schemas
+    const groups = await (
+      await load()
+    )([path.join(dir, 'a.ts'), path.join(dir, 'b.ts')], { threshold: 1, json: true });
     expect(groups).toHaveLength(1);
-    const group = groups[0]!;
-    expect(group.similarity).toBe(1);
-
-    // Validate both declarations reference the correct class name
-    const names = group.decls.map(d => d.location.name).sort();
-    expect(names).toEqual(['Foo', 'Foo']);
+    const g = groups[0]!;
+    expect(g.similarity).toBe(1);
+    expect(g.decls.map(d => d.location.name).sort()).toEqual(['Foo', 'Foo']);
   });
 });

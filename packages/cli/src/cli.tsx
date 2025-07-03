@@ -10,7 +10,7 @@ import { findDuplicates } from '@dry-lint/core';
 import { DryUI } from './ui.js';
 
 // Initialize the CLI program
-const program = new Command();
+export const program = new Command();
 program
   .name('dry')
   .description('Detect duplicate declarations across TypeScript & Zod schemas')
@@ -26,51 +26,55 @@ program
   .parse();
 
 // Main execution block
-(async () => {
-  const opts = program.opts();
-  const [projectDir = '.'] = program.args;
+export async function run(argv = process.argv.slice(2)) {
+  program.parse(argv, { from: 'user' });
+  await (async () => {
+    const opts = program.opts();
+    const [projectDir = '.'] = program.args;
 
-  // 1) Verify that the project directory exists and is a directory
-  if (!fs.existsSync(projectDir) || !fs.statSync(projectDir).isDirectory()) {
-    console.error(`Error: path "${projectDir}" not found or is not a directory`);
-    process.exit(1);
-  }
-
-  try {
-    // 2) Construct the list of files to scan based on globs
-    const includePatterns = ['**/*.{ts,tsx}'];
-    const ignoreGlobs: string[] = Array.isArray(opts.ignore) ? opts.ignore : [opts.ignore];
-    const filePaths = await globby(includePatterns, {
-      cwd: projectDir,
-      absolute: true,
-      ignore: ignoreGlobs,
-    });
-
-    // Determine output file path if --out option is used
-    let outFilePath: string | undefined;
-    if (opts.out) {
-      outFilePath = path.isAbsolute(opts.out) ? opts.out : path.join(projectDir, opts.out);
+    // 1) Verify that the project directory exists and is a directory
+    if (!fs.existsSync(projectDir) || !fs.statSync(projectDir).isDirectory()) {
+      console.error(`Error: path "${projectDir}" not found or is not a directory`);
+      process.exit(1);
     }
 
-    // 3) Dispatch to either interactive UI or direct report generation
-    if (opts.ui) {
-      // Launch the Ink UI component for interactive navigation
-      render(<DryUI projectPath={projectDir} threshold={opts.threshold} />);
-    } else {
-      // Run duplicate detection and write reports based on options
-      await findDuplicates(filePaths, {
-        threshold: opts.threshold,
-        json: opts.json,
-        sarif: opts.sarif,
-        fix: opts.fix,
-        outFile: outFilePath,
+    try {
+      // 2) Construct the list of files to scan based on globs
+      const includePatterns = ['**/*.{ts,tsx}'];
+      const ignoreGlobs: string[] = Array.isArray(opts.ignore) ? opts.ignore : [opts.ignore];
+      const filePaths = await globby(includePatterns, {
+        cwd: projectDir,
+        absolute: true,
         ignore: ignoreGlobs,
-        cache: opts.noCache !== true,
       });
+
+      // Determine output file path if --out option is used
+      let outFilePath: string | undefined;
+      if (opts.out) {
+        outFilePath = path.isAbsolute(opts.out) ? opts.out : path.join(projectDir, opts.out);
+      }
+
+      // 3) Dispatch to either interactive UI or direct report generation
+      if (opts.ui) {
+        // Launch the Ink UI component for interactive navigation
+        render(<DryUI projectPath={projectDir} threshold={opts.threshold} />);
+      } else {
+        // Run duplicate detection and write reports based on options
+        await findDuplicates(filePaths, {
+          threshold: opts.threshold,
+          json: opts.json,
+          sarif: opts.sarif,
+          fix: opts.fix,
+          outFile: outFilePath,
+          ignore: ignoreGlobs,
+          cache: opts.noCache !== true,
+        });
+      }
+    } catch (err: any) {
+      // 4) Handle any unexpected errors during execution
+      console.error(err.message || err);
+      process.exit(1);
     }
-  } catch (err: any) {
-    // 4) Handle any unexpected errors during execution
-    console.error(err.message || err);
-    process.exit(1);
-  }
-})();
+  })();
+}
+if (import.meta.main) run();

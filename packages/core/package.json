@@ -29,5 +29,6 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest"
   },
+  "type": "module",
   "types": "./src/index.ts"
 }

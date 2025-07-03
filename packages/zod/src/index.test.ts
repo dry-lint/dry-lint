@@ -2,7 +2,7 @@ import { parse } from '@babel/parser';
 import traverse from '@babel/traverse';
 import * as t from '@babel/types';
 import { describe, expect, it } from 'vitest';
-import { flattenZodType } from './index';
+import { flattenZodType } from './index.js';
 import '@dry-lint/zod';
 import { collectDeclarations } from '@dry-lint/core';
 
@@ -16,7 +16,7 @@ function parseExpr(code: string): t.Expression {
   let expr: t.Expression | undefined;
   // Traverse the AST to capture the first CallExpression
   traverse(ast, {
-    CallExpression(path) {
+    CallExpression(path: { node: t.Expression | undefined }) {
       if (!expr) expr = path.node;
     },
   });

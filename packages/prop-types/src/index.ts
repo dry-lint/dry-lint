@@ -62,7 +62,10 @@ registerExtractor((filePath, fileText): Declaration[] => {
 
   // Traverse AST to find PropTypes assignments
   traverse(ast, {
-    AssignmentExpression(path) {
+    AssignmentExpression(path: {
+      node: { left: any; right: any };
+      scope: { generateUid: () => any };
+    }) {
       const left = path.node.left;
       const right = path.node.right;
 

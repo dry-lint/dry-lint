@@ -28,36 +28,44 @@ const xsdSample = `
 
 describe('XSD plugin', () => {
   it('extracts complexType and simpleType definitions without duplicates', async () => {
-    // Create a temporary directory and write the XSD sample to a file
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-xsd-'));
     const schemaFile = path.join(tmpDir, 'schema.xsd');
     fs.writeFileSync(schemaFile, xsdSample);
 
-    // Run duplicate detection at full similarity threshold
     const groups = await findDuplicates([schemaFile], { threshold: 1, json: true });
-
-    // Expect two distinct type declarations (Person, Color) → no duplicate groups
     expect(groups).toHaveLength(0);
   });
 
   it('detects duplicate type definitions across multiple XSD files', async () => {
-    // Prepare two XSD files with identical content
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-xsd-dup-'));
     const fileA = path.join(tmpDir, 'a.xsd');
     const fileB = path.join(tmpDir, 'b.xsd');
     fs.writeFileSync(fileA, xsdSample);
     fs.writeFileSync(fileB, xsdSample);
 
-    // Run duplicate detection on both files
     const groups = await findDuplicates([fileA, fileB], { threshold: 1, json: true });
-
-    // We should get two duplicate groups: one for each type name
     expect(groups).toHaveLength(2);
-    // All groups should have perfect similarity
     groups.forEach(g => expect(g.similarity).toBe(1));
 
-    // Extract the duplicated type names for verification
     const dupNames = groups.map(g => g.decls[0]!.location.name).sort();
     expect(dupNames).toEqual(['Color', 'Person']);
+  });
+
+  it('returns empty on malformed XML', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-xsd-bad-'));
+    const badFile = path.join(tmpDir, 'bad.xsd');
+    fs.writeFileSync(badFile, '<xs:schema><unclosed></xs:schema>');
+
+    const groups = await findDuplicates([badFile], { threshold: 1, json: true });
+    expect(groups).toHaveLength(0);
+  });
+
+  it('returns empty when no <schema> element is present', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-xsd-noschema-'));
+    const noSchemaFile = path.join(tmpDir, 'noschema.xsd');
+    fs.writeFileSync(noSchemaFile, '<root></root>');
+
+    const groups = await findDuplicates([noSchemaFile], { threshold: 1, json: true });
+    expect(groups).toHaveLength(0);
   });
 });

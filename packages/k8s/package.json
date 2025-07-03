@@ -32,5 +32,6 @@
     "test": "vitest",
     "test:ci": "vitest run"
   },
+  "type": "module",
   "types": "dist/index.d.ts"
 }

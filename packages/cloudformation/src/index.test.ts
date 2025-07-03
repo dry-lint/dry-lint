@@ -1,64 +1,168 @@
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
-import { describe, expect, it } from 'vitest';
-import '../src/index';
-import { findDuplicates } from '@dry-lint/core';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-/**
- * Sample CloudFormation template in YAML format for testing resource extraction.
- */
-const simpleTemplateYAML = `
+// helpers
+const mkTmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'cfn-'));
+const writeFile = (dir: string, name: string, data: string) =>
+  fs.writeFileSync(path.join(dir, name), data);
+
+// load extractor
+const load = async () => {
+  await import('./index.js');
+  const { findDuplicates } = await import('@dry-lint/core');
+  return findDuplicates;
+};
+
+describe('CloudFormation extractor', () => {
+  const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+  });
+
+  const yamlTpl = `
 AWSTemplateFormatVersion: '2010-09-09'
 Resources:
-  MyBucket:
+  Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: my-bucket
-  MyQueue:
+      Name: foo
+  Queue:
     Type: AWS::SQS::Queue
-    Properties:
-      QueueName: my-queue
 `;
 
-describe('CloudFormation plugin', () => {
-  it('extracts distinct resources from a single YAML template without duplicates', async () => {
-    // Create a temporary directory and write the template
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-cfn-'));
-    const filePath = path.join(tmpDir, 'template.yaml');
-    fs.writeFileSync(filePath, simpleTemplateYAML);
+  const jsonTpl = JSON.stringify({
+    AWSTemplateFormatVersion: '2010-09-09',
+    Resources: {
+      JsonRes: { Type: 'AWS::Lambda::Function', Properties: { Handler: 'h' } },
+    },
+  });
 
-    // Run duplicate detection with a perfect similarity threshold
-    const groups = await findDuplicates([filePath], { threshold: 1, json: true });
+  it('extracts YAML resources (no duplicates)', async () => {
+    const dir = mkTmp();
+    writeFile(dir, 'tpl.yaml', yamlTpl);
 
-    // Expect no duplicate groups since two different resources exist
+    const groups = await (
+      await load()
+    )([path.join(dir, 'tpl.yaml')], {
+      threshold: 1,
+      json: true,
+    });
     expect(groups).toHaveLength(0);
   });
 
-  it('detects duplicate resource definitions across multiple templates', async () => {
-    // Prepare two template files with the same single resource
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-cfn-dup-'));
-    const templateContent = `
+  it('extracts JSON resources', async () => {
+    const dir = mkTmp();
+    writeFile(dir, 'tpl.json', jsonTpl);
+
+    const groups = await (
+      await load()
+    )([path.join(dir, 'tpl.json')], {
+      threshold: 1,
+      json: true,
+    });
+    expect(groups).toHaveLength(0);
+  });
+
+  it('detects duplicate resources across files', async () => {
+    const dir = mkTmp();
+    const single = `
 AWSTemplateFormatVersion: '2010-09-09'
 Resources:
-  DupRes:
+  Dup:
     Type: AWS::DynamoDB::Table
 `;
-    const fileA = path.join(tmpDir, 'a.yaml');
-    const fileB = path.join(tmpDir, 'b.yaml');
-    fs.writeFileSync(fileA, templateContent);
-    fs.writeFileSync(fileB, templateContent);
+    writeFile(dir, 'a.yaml', single);
+    writeFile(dir, 'b.yaml', single);
 
-    // Run duplicate detection on both files
-    const groups = await findDuplicates([fileA, fileB], { threshold: 1, json: true });
-
-    // Expect exactly one duplicate group with full similarity
+    const groups = await (
+      await load()
+    )([path.join(dir, 'a.yaml'), path.join(dir, 'b.yaml')], { threshold: 1, json: true });
     expect(groups).toHaveLength(1);
-    const group = groups[0]!;
-    expect(group.similarity).toBe(1);
+    expect(groups[0]!.similarity).toBe(1);
+    const names = groups[0]!.decls.map(d => d.location.name).sort();
+    expect(names).toEqual(['Dup', 'Dup']);
+  });
 
-    // Verify both declarations reference the same logical resource ID
-    const resourceNames = group.decls.map(d => d.location.name).sort();
-    expect(resourceNames).toEqual(['DupRes', 'DupRes']);
+  it('skips when Resources is missing or not an object', async () => {
+    const dir1 = mkTmp();
+    writeFile(dir1, 'none.yaml', 'AWSTemplateFormatVersion: "2010-09-09"');
+    const dir2 = mkTmp();
+    writeFile(dir2, 'bad.yaml', 'Resources: []');
+
+    const fn = await load();
+    const g1 = await fn([path.join(dir1, 'none.yaml')], { threshold: 1, json: true });
+    const g2 = await fn([path.join(dir2, 'bad.yaml')], { threshold: 1, json: true });
+    expect(g1).toHaveLength(0);
+    expect(g2).toHaveLength(0);
+  });
+
+  it('skips non-object resource entries', async () => {
+    const dir = mkTmp();
+    const tpl = `
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  X: null
+  Y:
+    Type: AWS::SNS::Topic
+`;
+    writeFile(dir, 'mix.yaml', tpl);
+
+    const groups = await (
+      await load()
+    )([path.join(dir, 'mix.yaml')], {
+      threshold: 1,
+      json: true,
+    });
+    expect(groups).toHaveLength(0);
+  });
+
+  it('handles YAML parse errors gracefully', async () => {
+    vi.doMock('js-yaml', () => ({
+      load: () => {
+        throw new Error('boom');
+      },
+    }));
+    const dir = mkTmp();
+    writeFile(dir, 'err.yaml', 'not: valid: yaml:');
+
+    const groups = await (
+      await load()
+    )([path.join(dir, 'err.yaml')], {
+      threshold: 1,
+      json: true,
+    });
+    expect(groups).toHaveLength(0);
+    expect(errSpy).toHaveBeenCalled();
+  });
+
+  it('treats distinct resources below threshold as unique', async () => {
+    const dir = mkTmp();
+    writeFile(
+      dir,
+      'a.yaml',
+      `
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  A: { Type: AWS::S3::Bucket }
+`
+    );
+    writeFile(
+      dir,
+      'b.yaml',
+      `
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  B: { Type: AWS::S3::Bucket }
+`
+    );
+
+    const groups = await (
+      await load()
+    )([path.join(dir, 'a.yaml'), path.join(dir, 'b.yaml')], { threshold: 0.9, json: true });
+    expect(groups).toHaveLength(0);
   });
 });

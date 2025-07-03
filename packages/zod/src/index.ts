@@ -49,7 +49,7 @@ registerExtractor((filePath, fileText): Declaration[] => {
 
   // Traverse AST to locate Zod object declarations
   traverse(ast, {
-    VariableDeclarator(path) {
+    VariableDeclarator(path: { node: { id: any; init: any } }) {
       const { id, init } = path.node;
       // Match patterns like: const Foo = z.object({ ... });
       if (

@@ -18,7 +18,7 @@ import {
   normalizeTypeAlias,
   normalizeTypeLiteral,
   normalizeUnion,
-} from './index';
+} from './index.js';
 
 function createSource(code: string) {
   const project = new Project({ useInMemoryFileSystem: true });

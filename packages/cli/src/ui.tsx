@@ -5,6 +5,42 @@ import path from 'path';
 import { DupGroup, findDuplicates } from '@dry-lint/core';
 import { globby } from 'globby';
 
+export function DryUIRender({
+  state,
+  groups,
+  cursor,
+}: {
+  state: 'scanning' | 'done';
+  groups: DupGroup[];
+  cursor: number;
+}) {
+  if (state === 'scanning') {
+    return (
+      <Box>
+        <Text color="cyan">
+          <Spinner type="dots" /> Scanning…
+        </Text>
+      </Box>
+    );
+  }
+
+  if (!groups.length) {
+    return <Text color="green">✅ No duplicate declarations found!</Text>;
+  }
+
+  return (
+    <Box flexDirection="column">
+      <Text color="yellow">{groups.length} duplicate groups (↑/↓ navigate, ⏎ show, q quit)</Text>
+      {groups.map((g, i) => (
+        <Text key={i} inverse={i === cursor} wrap="truncate-end">
+          {Math.round(g.similarity * 100)}% – {g.decls[0]!.location.name} ↔{' '}
+          {g.decls[1]!.location.name}
+        </Text>
+      ))}
+    </Box>
+  );
+}
+
 /**
  * Props for the DryUI component.
  * @property projectPath - Root path of the project to scan for duplicates
@@ -45,41 +81,15 @@ export function DryUI({ projectPath, threshold }: { projectPath: string; thresho
     if (key.escape || input === 'q') exit();
   });
 
-  // Render spinner while scanning
-  if (state === 'scanning') {
-    return (
-      <Box>
-        <Text color="cyan">
-          <Spinner type="dots" /> Scanning…
-        </Text>
-      </Box>
-    );
-  }
-
-  // Show success message if no duplicates found
-  if (!groups.length) {
-    return <Text color="green">✅ No duplicate declarations found!</Text>;
-  }
-
   // Display list of duplicate groups with navigation instructions
-  return (
-    <Box flexDirection="column">
-      <Text color="yellow">{groups.length} duplicate groups (↑/↓ navigate, ⏎ show, q quit)</Text>
-      {groups.map((g, i) => (
-        <Text key={i} inverse={i === cursor} wrap="truncate-end">
-          {Math.round(g.similarity * 100)}% – {g.decls[0]!.location.name} ↔{' '}
-          {g.decls[1]!.location.name}
-        </Text>
-      ))}
-    </Box>
-  );
+  return <DryUIRender state={state} groups={groups} cursor={cursor} />;
 }
 
 /**
  * Prints detailed information for a duplicate group to the console.
  * @param g - Duplicate group to print
  */
-function printGroup(g: DupGroup) {
+export function printGroup(g: DupGroup) {
   console.log('\n' + '─'.repeat(60));
   console.log(`Group similarity: ${(g.similarity * 100).toFixed(0)}%`);
   g.decls.forEach(d =>

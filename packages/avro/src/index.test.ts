@@ -1,61 +1,134 @@
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
-import { describe, expect, it } from 'vitest';
-import '../src/index';
-import { findDuplicates } from '@dry-lint/core';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-describe('Avro plugin', () => {
-  it('should extract record definitions from a single .avsc file without reporting duplicates', async () => {
-    // Create a temporary directory for test schema files
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-avro-'));
+// helpers
+const mkTmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'avro-'));
+const writeFile = (dir: string, name: string, data: string) =>
+  fs.writeFileSync(path.join(dir, name), data);
 
-    // Define a simple Avro record schema
-    const schema = {
-      type: 'record',
-      name: 'User',
-      fields: [
-        { name: 'id', type: 'long' },
-        { name: 'name', type: 'string' },
-      ],
-    };
+// ensure extractor is registered before testing
+const load = async () => {
+  await import('./index.js');
+  const { findDuplicates } = await import('@dry-lint/core');
+  return findDuplicates;
+};
 
-    // Write the schema to a .avsc file in the temp directory
-    const filePath = path.join(tmpDir, 'user.avsc');
-    fs.writeFileSync(filePath, JSON.stringify(schema, null, 2));
+describe('Avro JSON extractor', () => {
+  const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    // Run duplicate detection; a single record should yield no duplicate groups
-    const groups = await findDuplicates([filePath], { threshold: 1, json: true });
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+  });
+
+  const simple = JSON.stringify({
+    type: 'record',
+    name: 'User',
+    fields: [
+      { name: 'id', type: 'string' },
+      { name: 'age', type: 'int' },
+    ],
+  });
+
+  const nested = JSON.stringify({
+    type: 'record',
+    name: 'Outer',
+    fields: [
+      {
+        name: 'inner',
+        type: {
+          type: 'record',
+          name: 'Inner',
+          fields: [{ name: 'flag', type: 'boolean' }],
+        },
+      },
+    ],
+  });
+
+  it('extracts top-level record', async () => {
+    const dir = mkTmp();
+    writeFile(dir, 'user.avsc', simple);
+
+    const groups = await (
+      await load()
+    )([path.join(dir, 'user.avsc')], {
+      threshold: 1,
+      json: true,
+    });
     expect(groups).toHaveLength(0);
   });
 
-  it('should detect duplicate record definitions when identical schemas exist in multiple files', async () => {
-    // Create another temporary directory for duplicate test
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-avro-dup-'));
+  it('extracts nested records', async () => {
+    const dir = mkTmp();
+    writeFile(dir, 'nested.avsc', nested);
 
-    // Define a record schema named 'Foo'
-    const schema = {
-      type: 'record',
-      name: 'Foo',
-      fields: [{ name: 'x', type: 'int' }],
-    };
+    const groups = await (
+      await load()
+    )([path.join(dir, 'nested.avsc')], {
+      threshold: 1,
+      json: true,
+    });
+    expect(groups).toHaveLength(0);
+  });
 
-    // Write the same schema to two separate files
-    const fileA = path.join(tmpDir, 'a.avsc');
-    const fileB = path.join(tmpDir, 'b.avsc');
-    fs.writeFileSync(fileA, JSON.stringify(schema));
-    fs.writeFileSync(fileB, JSON.stringify(schema));
+  it('detects duplicate records across files', async () => {
+    const dir = mkTmp();
+    writeFile(dir, 'a.avsc', simple);
+    writeFile(dir, 'b.avsc', simple);
 
-    // Run duplicate detection with perfect similarity threshold
-    const groups = await findDuplicates([fileA, fileB], { threshold: 1, json: true });
-
-    // Expect one group of duplicates with similarity score of 1
+    const groups = await (
+      await load()
+    )([path.join(dir, 'a.avsc'), path.join(dir, 'b.avsc')], { threshold: 1, json: true });
     expect(groups).toHaveLength(1);
-    const group = groups[0]!;
-    expect(group.similarity).toBe(1);
+    expect(groups[0]!.similarity).toBe(1);
+    const names = groups[0]!.decls.map(d => d.location.name).sort();
+    expect(names).toEqual(['User', 'User']);
+  });
 
-    // Verify both declarations reference the same record name
-    const recordNames = group.decls.map(d => d.location.name).sort();
-    expect(recordNames).toEqual(['Foo', 'Foo']);
+  it('treats distinct records below threshold as unique', async () => {
+    const a = JSON.stringify({ type: 'record', name: 'A', fields: [] });
+    const b = JSON.stringify({ type: 'record', name: 'B', fields: [] });
+    const dir = mkTmp();
+    writeFile(dir, 'a.avsc', a);
+    writeFile(dir, 'b.avsc', b);
+
+    const groups = await (
+      await load()
+    )([path.join(dir, 'a.avsc'), path.join(dir, 'b.avsc')], { threshold: 0.9, json: true });
+    expect(groups).toHaveLength(0);
+  });
+
+  it('ignores non-record schemas', async () => {
+    const nonRecord = JSON.stringify({
+      type: 'enum',
+      name: 'E',
+      symbols: ['X', 'Y'],
+    });
+    const dir = mkTmp();
+    writeFile(dir, 'enum.avsc', nonRecord);
+
+    const groups = await (
+      await load()
+    )([path.join(dir, 'enum.avsc')], {
+      threshold: 1,
+      json: true,
+    });
+    expect(groups).toHaveLength(0);
+  });
+
+  it('handles JSON parse errors gracefully', async () => {
+    const dir = mkTmp();
+    writeFile(dir, 'bad.avsc', '{ not valid JSON');
+
+    const groups = await (
+      await load()
+    )([path.join(dir, 'bad.avsc')], {
+      threshold: 1,
+      json: true,
+    });
+    expect(groups).toHaveLength(0);
+    expect(errorSpy).toHaveBeenCalled();
   });
 });

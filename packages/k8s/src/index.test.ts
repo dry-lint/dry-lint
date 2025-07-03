@@ -1,71 +1,139 @@
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
-import { describe, expect, it } from 'vitest';
-import '../src/index';
-import { findDuplicates } from '@dry-lint/core';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-/**
- * Test suite for the Kubernetes YAML extractor plugin.
- * Validates correct extraction of multiple resources and duplicate detection across files.
- */
-describe('Kubernetes YAML plugin', () => {
-  it('extracts multiple resources from a single YAML document without duplicates', async () => {
-    // Create a temporary directory and write a multi-document YAML file
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-k8s-'));
-    const yamlContent = `
+// ────────── helpers ─────────────────────────────────────────────────────────
+const tmpFile = (dir: string, name: string, contents: string) => {
+  const p = path.join(dir, name);
+  fs.writeFileSync(p, contents);
+  return p;
+};
+
+// Load the plugin only *after* mocks are in place so registerExtractor
+// receives the mocked deps.
+const loadPlugin = async () => {
+  await import('./index.js'); // adjust path as needed
+  const { findDuplicates } = await import('@dry-lint/core');
+  return { findDuplicates };
+};
+
+describe('Kubernetes YAML extractor', () => {
+  const consoleErr = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+  afterEach(() => {
+    vi.resetModules(); // fresh plugin instance per test
+    vi.clearAllMocks();
+  });
+
+  // 1 ────────────────────────────────────────────────────────────────────────
+  it('extracts multiple resources from one file – no duplicates', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'k8s-ok-'));
+    const main = tmpFile(
+      dir,
+      'multi.yaml',
+      `
 apiVersion: v1
 kind: Service
-metadata:
-  name: svc
-spec:
-  ports:
-    - port: 80
+metadata: { name: svc }
+spec: {}
 ---
 apiVersion: apps/v1
 kind: Deployment
-metadata:
-  name: dep
-spec:
-  replicas: 2
-`;
-    const filePath = path.join(tmpDir, 'res.yaml');
-    fs.writeFileSync(filePath, yamlContent);
+metadata: { name: dep }
+spec: { replicas: 1 }`
+    );
 
-    // Run duplicate detection at full similarity threshold
-    const groups = await findDuplicates([filePath], { threshold: 1, json: true });
-
-    // Two distinct resources should yield no duplicate groups
+    const { findDuplicates } = await loadPlugin();
+    const groups = await findDuplicates([main], { threshold: 1, json: true });
     expect(groups).toHaveLength(0);
   });
 
-  it('detects duplicate resource definitions across separate files', async () => {
-    // Create a temporary directory and two identical YAML files
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-k8s-dup-'));
-    const snippet = `
+  // 2 ────────────────────────────────────────────────────────────────────────
+  it('detects duplicates across files', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'k8s-dupe-'));
+    const content = `
 apiVersion: v1
-kind: Service
-metadata:
-  name: foo
-spec:
-  ports:
-    - port: 8080
-`;
-    const fileA = path.join(tmpDir, 'a.yaml');
-    const fileB = path.join(tmpDir, 'b.yaml');
-    fs.writeFileSync(fileA, snippet);
-    fs.writeFileSync(fileB, snippet);
+kind: ConfigMap
+metadata: { name: foo }
+data: { k: v }`;
+    const a = tmpFile(dir, 'a.yaml', content);
+    const b = tmpFile(dir, 'b.yaml', content);
 
-    // Run duplicate detection on both files
-    const groups = await findDuplicates([fileA, fileB], { threshold: 1, json: true });
+    const { findDuplicates } = await loadPlugin();
+    const groups = await findDuplicates([a, b], { threshold: 1, json: true });
 
-    // Expect exactly one duplicate group for the 'foo' resource
     expect(groups).toHaveLength(1);
-    const group = groups[0]!;
-    expect(group.similarity).toBe(1);
+    expect(groups[0]!.similarity).toBe(1);
+    expect(groups[0]!.decls.map(d => d.location.name)).toEqual(['foo', 'foo']);
+  });
 
-    // Both declarations should reference the same resource name 'foo'
-    const resourceNames = group.decls.map(d => d.location.name).sort();
-    expect(resourceNames).toEqual(['foo', 'foo']);
+  // 3 ────────────────────────────────────────────────────────────────────────
+  it('handles YAML parse errors (error branch)', async () => {
+    vi.doMock('js-yaml', () => ({
+      loadAll: () => {
+        throw new Error('bad yaml');
+      },
+    }));
+
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'k8s-err-'));
+    const bad = tmpFile(dir, 'broken.yaml', '::::');
+
+    const { findDuplicates } = await loadPlugin();
+    const groups = await findDuplicates([bad], { threshold: 1, json: true });
+    expect(groups).toHaveLength(0); // extractor returned []
+    expect(consoleErr).toHaveBeenCalled(); // logged parse error
+  });
+
+  // 4 ────────────────────────────────────────────────────────────────────────
+  it('falls back to UnknownKind and <no-name> when fields are missing', async () => {
+    vi.doMock('js-yaml', () => ({
+      loadAll: () => [
+        { apiVersion: 'v1' }, // missing kind + metadata.name
+      ],
+    }));
+
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'k8s-fallback-'));
+    const dummy = tmpFile(dir, 'dummy.yaml', '#');
+
+    const { findDuplicates } = await loadPlugin();
+    const groups = await findDuplicates([dummy], { threshold: 1, json: true });
+    expect(groups).toHaveLength(0); // only one decl, no dupes
+  });
+
+  // 5 ────────────────────────────────────────────────────────────────────────
+  it('does not report below-threshold similarity as duplicate', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'k8s-thresh-'));
+    const svc = tmpFile(
+      dir,
+      'svc.yaml',
+      `apiVersion: v1\nkind: Service\nmetadata: { name: a }\nspec: {}` // Service
+    );
+    const dep = tmpFile(
+      dir,
+      'dep.yaml',
+      `apiVersion: apps/v1\nkind: Deployment\nmetadata: { name: b }\nspec: {}` // Deployment
+    );
+
+    const { findDuplicates } = await loadPlugin();
+    const groups = await findDuplicates([svc, dep], { threshold: 0.9, json: true });
+    expect(groups).toHaveLength(0);
+  });
+
+  it('covers non-object YAML doc branch', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'k8s-nonobj-'));
+    const yaml = `
+"not-an-object"          # scalar → should be skipped
+---
+kind: ConfigMap          # object → normal path
+metadata: { name: test }
+spec: {}
+`;
+    const file = tmpFile(dir, 'mixed.yaml', yaml);
+
+    const { findDuplicates } = await loadPlugin();
+    const groups = await findDuplicates([file], { threshold: 1, json: true });
+
+    expect(groups).toHaveLength(0);
   });
 });
