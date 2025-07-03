@@ -21,7 +21,7 @@
 ## 📦 Packages
 
 | Package        | npm                        | What it extracts                |
-|----------------|----------------------------|---------------------------------|
+| -------------- | -------------------------- | ------------------------------- |
 | core           | `@dry-lint/core`           | Engine & public API             |
 | cli            | `@dry-lint/cli`            | Command‑line interface & Ink UI |
 | asyncapi       | `@dry-lint/asyncapi`       | AsyncAPI operations & schemas   |
@@ -66,7 +66,7 @@ npx dry src/  # or just `npx dry` for the current folder
 ### CLI flags
 
 | Flag               | Description                            |
-|--------------------|----------------------------------------|
+| ------------------ | -------------------------------------- |
 | `-t, --threshold`  | Similarity threshold (0‑1, default 1)  |
 | `--ignore`         | Glob patterns to exclude               |
 | `--json / --sarif` | Machine‑readable reports               |
