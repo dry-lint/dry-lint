@@ -18,9 +18,9 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "changeset": "changeset",
-    "changeset:publish": "changeset publish",
-    "changeset:version": "changeset version",
+    "changeset": "bunx changeset",
+    "changeset:version": "bunx changeset version",
+    "changeset:publish": "bunx changeset publish",
     "check-types": "turbo run check-types",
     "dev": "turbo run dev",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",

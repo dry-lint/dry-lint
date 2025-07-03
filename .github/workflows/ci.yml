@@ -68,7 +68,11 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
-          token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Setup .npmrc for npm publish
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -76,13 +80,22 @@ jobs:
       - name: Install dependencies with Bun
         run: bun install
 
-      - name: Build for release
+      - name: Build
         run: bun run build
 
-      - name: Publish with Changesets
+      - name: Create version bump PR (if needed)
         uses: changesets/action@v1
         with:
-          publish: bun run changeset:publish
+          version: bunx changeset version
+          commit: "chore: version packages"
+          title: "chore: version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish only changed packages
+        uses: changesets/action@v1
+        with:
+          publish: bunx changeset publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -27,9 +27,9 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "bun run clean && tsc -b",
     "check-types": "tsc -b --noEmit",
-    "clean": "rimraf dist",
+    "clean": "bunx rimraf dist/* dist",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest",
     "test:ci": "vitest run"

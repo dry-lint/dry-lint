@@ -4,11 +4,11 @@
   "tasks": {
     "clean": {
       "cache": false,
-      "outputs": []
+      "outputs": [],
+      "inputs": []
     },
-
     "build": {
-      "dependsOn": ["clean", "^build"],
+      "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**"]
     },

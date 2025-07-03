@@ -6,10 +6,9 @@
       "repo": "dry-lint/dry-lint"
     }
   ],
-  "commit": true,
-  "fixed": [],
+  "commit": false,
   "linked": [],
-  "access": "restricted",
+  "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "ignore": []
