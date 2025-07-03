@@ -68,7 +68,6 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
-          cache: npm
           token: ${{ secrets.NPM_TOKEN }}
 
       - name: Setup Bun
