@@ -1,8 +1,8 @@
 {
   "name": "@dry-lint/json-schema",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "dependencies": {
-    "@dry-lint/core": "1.0.0",
+    "@dry-lint/core": "1.0.1",
     "json-schema-ref-parser": "^9.0.9"
   },
   "devDependencies": {

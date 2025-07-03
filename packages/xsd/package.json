@@ -1,8 +1,8 @@
 {
   "name": "@dry-lint/xsd",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "dependencies": {
-    "@dry-lint/core": "1.0.0",
+    "@dry-lint/core": "1.0.1",
     "fast-xml-parser": "^5.2.5"
   },
   "devDependencies": {

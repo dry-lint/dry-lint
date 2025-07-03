@@ -1,9 +1,9 @@
 {
   "name": "@dry-lint/asyncapi",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "dependencies": {
     "@asyncapi/parser": "^3.4.0",
-    "@dry-lint/core": "1.0.0",
+    "@dry-lint/core": "1.0.1",
     "yaml": "^2.8.0"
   },
   "devDependencies": {
