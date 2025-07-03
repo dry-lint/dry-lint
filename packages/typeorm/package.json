@@ -1,8 +1,8 @@
 {
   "name": "@dry-lint/typeorm",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "dependencies": {
-    "@dry-lint/core": "1.0.0",
+    "@dry-lint/core": "1.0.1",
     "ts-morph": "^26.0.0"
   },
   "devDependencies": {

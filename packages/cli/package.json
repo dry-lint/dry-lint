@@ -1,8 +1,8 @@
 {
   "name": "@dry-lint/cli",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "dependencies": {
-    "@dry-lint/core": "1.0.0",
+    "@dry-lint/core": "1.0.1",
     "commander": "^14.0.0",
     "globby": "^14.1.0",
     "ink": "^6.0.1",

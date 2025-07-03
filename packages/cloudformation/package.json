@@ -1,8 +1,8 @@
 {
   "name": "@dry-lint/cloudformation",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "dependencies": {
-    "@dry-lint/core": "1.0.0",
+    "@dry-lint/core": "1.0.1",
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {

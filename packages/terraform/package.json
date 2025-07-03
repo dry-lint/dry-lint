@@ -1,8 +1,8 @@
 {
   "name": "@dry-lint/terraform",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "dependencies": {
-    "@dry-lint/core": "1.0.0",
+    "@dry-lint/core": "1.0.1",
     "@evops/hcl-terraform-parser": "^1.0.0"
   },
   "devDependencies": {
