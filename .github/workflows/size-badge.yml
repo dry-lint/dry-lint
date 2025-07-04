@@ -2,12 +2,11 @@ name: Update CLI size badge
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   size:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,23 +23,23 @@ jobs:
 
       - name: Measure tarball size & update badge
         run: |
-          # Pack the CLI and gzip it to get the byte count
           cd packages/cli
           TAR=$(npm pack)
-          BYTES=$(gzip -c $TAR | wc -c)
-          KB=$(awk "BEGIN {printf \"%.1f\", $BYTES/1024}")
-          cd ../../
+          SIZE_BYTES=$(stat -c%s "$TAR")
+          SIZE_KB=$(awk "BEGIN {printf \"%.1f\", $SIZE_BYTES/1024}")
+          echo "CLI size = $SIZE_KB kB"
+          cd ../..
 
-          # Replace the placeholder in README.md
+          # Replace the badge block in README.md in one go:
           sed -i -E \
-            "s|https://img\.shields\.io/badge/cli%20size-[0-9]+\.[0-9]+%20kB-blue|https://img.shields.io/badge/cli%20size-$KB%20kB-blue|" \
-            README.md
+          's|<!-- CLI_SIZE_BADGE -->.*<!-- /CLI_SIZE_BADGE -->|<!-- CLI_SIZE_BADGE -->\n![CLI size](https://img.shields.io/badge/cli%20size-'"${SIZE_KB}"'%20kB-blue)\n<!-- /CLI_SIZE_BADGE -->|' \
+          README.md
 
       - name: Commit & push badge update
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add README.md
-          git diff --quiet || git commit -m "chore: update CLI size badge to $KB kB" && git push
+          git diff --quiet || git commit -m "chore: update CLI size badge to ${SIZE_KB} kB" && git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
