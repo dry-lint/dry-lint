@@ -40,12 +40,13 @@ jobs:
       - name: Run tests
         run: bun run test
 
-      - name: Fail if CLI > 200 kB
+      - name: Fail if CLI > 200 kB gzipped
         run: |
-          PKG=$(bunx pkg-size ./packages/cli --json)
-          SIZE=$(echo $PKG | jq '.[0].gzipped')
-          if [ $SIZE -gt $((200*1024)) ]; then
-            echo "❌ CLI is too big: $((SIZE/1024)) kB" >&2
+          SIZE=$(bunx pkg-size ./packages/cli --json | jq '.gzipped')
+          THRESH=$((200 * 1024))
+          echo "CLI gzipped size: $((SIZE/1024)) kB"
+          if [ "$SIZE" -gt "$THRESH" ]; then
+            echo "❌ CLI is too big: $((SIZE/1024)) kB gzipped (limit is 200 kB)" >&2
             exit 1
           fi
 
