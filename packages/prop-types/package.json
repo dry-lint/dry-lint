@@ -1,12 +1,12 @@
 {
   "name": "@dry-lint/prop-types",
   "description": "Detect duplicate or near-duplicate PropTypes definitions in React components.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "Lodewijk Wensveen",
   "dependencies": {
     "@babel/parser": "^7.28.0",
     "@babel/traverse": "^7.28.0",
-    "@dry-lint/core": "1.0.1",
+    "@dry-lint/core": "1.0.2",
     "prop-types": "^15.8.1"
   },
   "devDependencies": {
