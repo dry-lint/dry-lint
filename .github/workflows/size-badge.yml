@@ -19,7 +19,7 @@ jobs:
 
       - name: Compute pkg size
         run: |
-          pkg-size packages/cli --json > raw-size.json
+          bunx pkg-size packages/cli --json > raw-size.json
           # raw-size.json contains something like:
           # [ { "name":"cli","size":123456, "gzipped":34567 } ]
           node -e "
