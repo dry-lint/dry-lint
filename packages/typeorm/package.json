@@ -34,7 +34,10 @@
   "publishConfig": {
     "access": "public"
   },
-  "repository": "dry-lint/dry-lint",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dry-lint/dry-lint.git"
+  },
   "scripts": {
     "build": "bun run clean && tsc -b",
     "check-types": "tsc -b --noEmit",

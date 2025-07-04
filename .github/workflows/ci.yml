@@ -1,17 +1,16 @@
 name: CI
 
 on:
-  workflow_dispatch:
-  push:
-    branches: [ main ]
   pull_request:
+  push:
+    branches: [main]
 
 jobs:
   test-build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ 22 ]
+        node-version: [22]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,8 +25,8 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
-      - name: Install dependencies with Bun
-        run: bun install
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
 
       - name: Build workspace
         run: bun run build
@@ -48,55 +47,3 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-
-  release:
-    if: github.ref == 'refs/heads/main'
-    needs: test-build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      packages: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          registry-url: https://registry.npmjs.org
-
-      - name: Setup .npmrc for npm publish
-        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Install dependencies with Bun
-        run: bun install
-
-      - name: Build
-        run: bun run build
-
-      - name: Create version bump PR (if needed)
-        uses: changesets/action@v1
-        with:
-          version: bunx changeset version
-          commit: "chore: version packages"
-          title: "chore: version packages"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish only changed packages
-        uses: changesets/action@v1
-        with:
-          publish: bunx changeset publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
