@@ -41,7 +41,7 @@ jobs:
         run: bun run test
 
       - name: Check bundle size
-        run: bun run check-size
+        run: bun run check-size-limit
 
       - name: Coverage
         run: bun run test:coverage
