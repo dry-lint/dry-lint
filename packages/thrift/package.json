@@ -1,11 +1,11 @@
 {
   "name": "@dry-lint/thrift",
   "description": "Detect duplicate or near-duplicate definitions in Apache Thrift IDL files.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "author": "Lodewijk Wensveen",
   "dependencies": {
     "@creditkarma/thrift-parser": "^2.0.0",
-    "@dry-lint/core": "1.0.2"
+    "@dry-lint/core": "1.0.3"
   },
   "devDependencies": {
     "@types/node": "^24.0.10",
