@@ -2,44 +2,45 @@ name: Update CLI size badge
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   size:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
-      - name: Install deps
-        run: bun install --frozen-lockfile
-
-      - name: Compute pkg size
+      - name: Install & build
         run: |
-          bunx pkg-size packages/cli --json > raw-size.json
-          # raw-size.json contains something like:
-          # [ { "name":"cli","size":123456, "gzipped":34567 } ]
-          node -e "
-            const { gzipped } = require('./raw-size.json')[0];
-            const kb = (gzipped/1024).toFixed(1)+' kB';
-            const badge = {
-              schemaVersion: 1,
-              label: 'cli size',
-              message: kb,
-              color: 'blue'
-            };
-            require('fs').writeFileSync('size-cli-badge.json', JSON.stringify(badge));
-          "
+          bun install --frozen-lockfile
+          bun run build
+
+      - name: Measure tarball size & update badge
+        run: |
+          # Pack the CLI and gzip it to get the byte count
+          cd packages/cli
+          TAR=$(npm pack)
+          BYTES=$(gzip -c $TAR | wc -c)
+          KB=$(awk "BEGIN {printf \"%.1f\", $BYTES/1024}")
+          cd ../../
+
+          # Replace the placeholder in README.md
+          sed -i -E \
+            "s|https://img\.shields\.io/badge/cli%20size-[0-9]+\.[0-9]+%20kB-blue|https://img.shields.io/badge/cli%20size-$KB%20kB-blue|" \
+            README.md
 
       - name: Commit & push badge update
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add size-cli-badge.json
-          git diff --quiet || git commit -m "chore: update CLI size badge"
-          git push
+          git add README.md
+          git diff --quiet || git commit -m "chore: update CLI size badge to $KB kB" && git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
