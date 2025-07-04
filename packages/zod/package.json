@@ -44,7 +44,6 @@
     "check-types": "tsc -b --noEmit",
     "clean": "bunx rimraf dist/* dist",
     "lint": "eslint \"src/**/*.ts\"",
-    "prepublishOnly": "bun run build && bun run test",
     "test": "vitest run",
     "test:ci": "vitest run",
     "test:coverage": "vitest run --coverage",

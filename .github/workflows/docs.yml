@@ -8,6 +8,7 @@ on:
 jobs:
   docs:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -17,6 +18,9 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: Build all packages
+        run: bun run build
 
       - name: Generate Typedoc
         run: |
