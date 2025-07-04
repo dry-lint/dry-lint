@@ -1,0 +1,45 @@
+name: Update CLI size badge
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  size:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install deps
+        run: bun install --frozen-lockfile
+
+      - name: Compute pkg size
+        run: |
+          pkg-size packages/cli --json > raw-size.json
+          # raw-size.json contains something like:
+          # [ { "name":"cli","size":123456, "gzipped":34567 } ]
+          node -e "
+            const { gzipped } = require('./raw-size.json')[0];
+            const kb = (gzipped/1024).toFixed(1)+' kB';
+            const badge = {
+              schemaVersion: 1,
+              label: 'cli size',
+              message: kb,
+              color: 'blue'
+            };
+            require('fs').writeFileSync('size-cli-badge.json', JSON.stringify(badge));
+          "
+
+      - name: Commit & push badge update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add size-cli-badge.json
+          git diff --quiet || git commit -m "chore: update CLI size badge"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

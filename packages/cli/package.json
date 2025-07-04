@@ -38,6 +38,7 @@
     "check-types": "tsc -b --noEmit",
     "clean": "bunx rimraf dist/* dist",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "size": "pkg-size .",
     "test": "vitest run",
     "test:ci": "vitest run",
     "test:coverage": "vitest run --coverage",

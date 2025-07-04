@@ -21,6 +21,7 @@
     "check-types": "tsc -b --noEmit",
     "clean": "bunx rimraf dist/* dist",
     "lint": "eslint \"src/**/*.ts\"",
+    "size": "pkg-size .",
     "test": "vitest",
     "test:ci": "vitest run"
   },

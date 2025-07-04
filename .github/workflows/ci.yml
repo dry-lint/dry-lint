@@ -40,6 +40,9 @@ jobs:
       - name: Run tests
         run: bun run test
 
+      - name: Check bundle size
+        run: bun run check-size
+
       - name: Coverage
         run: bun run test:coverage
 

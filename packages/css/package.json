@@ -37,15 +37,13 @@
   "publishConfig": {
     "access": "public"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/dry-lint/dry-lint.git"
-  },
+  "repository": "dry-lint/dry-lint.git",
   "scripts": {
     "build": "bun run clean && tsc -b",
     "check-types": "tsc -b --noEmit",
     "clean": "bunx rimraf dist/* dist",
     "lint": "eslint \"src/**/*.ts\"",
+    "size": "pkg-size .",
     "test": "vitest",
     "test:ci": "vitest run"
   },

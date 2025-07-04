@@ -1,6 +1,6 @@
 module.exports = [
-    {
-        path: 'dist/index.js',
-        limit: '5 KB'
-    }
+  {
+    path: 'packages/**/dist/index.js',
+    limit: '200 KB',
+  },
 ];
