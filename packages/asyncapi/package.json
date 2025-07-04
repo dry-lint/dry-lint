@@ -1,11 +1,11 @@
 {
   "name": "@dry-lint/asyncapi",
   "description": "Detect duplicate or near-duplicate definitions in AsyncAPI documents.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "Lodewijk Wensveen",
   "dependencies": {
     "@asyncapi/parser": "^3.4.0",
-    "@dry-lint/core": "1.0.1",
+    "@dry-lint/core": "1.0.2",
     "yaml": "^2.8.0"
   },
   "devDependencies": {

@@ -1,10 +1,10 @@
 {
   "name": "@dry-lint/xsd",
   "description": "Detect duplicate or near-duplicate definitions in XML Schema Definition (XSD) files.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "Lodewijk Wensveen",
   "dependencies": {
-    "@dry-lint/core": "1.0.1",
+    "@dry-lint/core": "1.0.2",
     "fast-xml-parser": "^5.2.5"
   },
   "devDependencies": {
