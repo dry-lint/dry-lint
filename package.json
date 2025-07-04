@@ -34,7 +34,6 @@
     "changeset:publish": "bunx changeset publish",
     "changeset:version": "bunx changeset version",
     "check-size": "pkg-size ./packages/cli",
-    "check-size-limit": "size-limit",
     "check-types": "turbo run check-types",
     "dev": "turbo run dev",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",

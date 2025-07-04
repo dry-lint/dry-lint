@@ -40,8 +40,14 @@ jobs:
       - name: Run tests
         run: bun run test
 
-      - name: Check bundle size
-        run: bun run check-size-limit
+      - name: Fail if CLI > 200 kB
+        run: |
+          PKG=$(bunx pkg-size ./packages/cli --json)
+          SIZE=$(echo $PKG | jq '.[0].gzipped')
+          if [ $SIZE -gt $((200*1024)) ]; then
+            echo "❌ CLI is too big: $((SIZE/1024)) kB" >&2
+            exit 1
+          fi
 
       - name: Coverage
         run: bun run test:coverage
