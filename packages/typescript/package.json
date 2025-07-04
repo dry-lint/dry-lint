@@ -1,6 +1,8 @@
 {
   "name": "@dry-lint/typescript",
+  "description": "Detect duplicate or near-duplicate TypeScript definitions using ts-morph AST parsing.",
   "version": "1.0.1",
+  "author": "Lodewijk Wensveen",
   "dependencies": {
     "@dry-lint/core": "1.0.1",
     "ts-morph": "^26.0.0"
@@ -17,16 +19,25 @@
   "files": [
     "dist"
   ],
+  "keywords": [
+    "ast",
+    "lint",
+    "ts-morph",
+    "typescript"
+  ],
+  "license": "MIT",
   "main": "dist/index.js",
   "private": false,
   "publishConfig": {
     "access": "public"
   },
+  "repository": "dry-lint/dry-lint",
   "scripts": {
     "build": "bun run clean && tsc -b",
     "check-types": "tsc -b --noEmit",
     "clean": "bunx rimraf dist/* dist",
     "lint": "eslint \"src/**/*.ts\"",
+    "prepublishOnly": "bun run build && bun run test",
     "test": "vitest run",
     "test:ci": "vitest run",
     "test:coverage": "vitest run --coverage",

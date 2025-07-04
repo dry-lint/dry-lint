@@ -1,6 +1,8 @@
 {
   "name": "@dry-lint/k8s",
+  "description": "Detect duplicate or near-duplicate resource definitions in Kubernetes YAML manifests.",
   "version": "1.0.1",
+  "author": "Lodewijk Wensveen",
   "dependencies": {
     "@dry-lint/core": "1.0.1",
     "js-yaml": "^4.1.0"
@@ -19,16 +21,25 @@
   "files": [
     "dist"
   ],
+  "keywords": [
+    "kubernetes",
+    "lint",
+    "typescript",
+    "yaml"
+  ],
+  "license": "MIT",
   "main": "dist/index.js",
   "private": false,
   "publishConfig": {
     "access": "public"
   },
+  "repository": "dry-lint/dry-lint",
   "scripts": {
     "build": "bun run clean && tsc -b",
     "check-types": "tsc -b --noEmit",
     "clean": "bunx rimraf dist/* dist",
     "lint": "eslint \"src/**/*.ts\"",
+    "prepublishOnly": "bun run build && bun run test",
     "test": "vitest",
     "test:ci": "vitest run"
   },

@@ -1,6 +1,8 @@
 {
   "name": "@dry-lint/prop-types",
+  "description": "Detect duplicate or near-duplicate PropTypes definitions in React components.",
   "version": "1.0.1",
+  "author": "Lodewijk Wensveen",
   "dependencies": {
     "@babel/parser": "^7.28.0",
     "@babel/traverse": "^7.28.0",
@@ -20,16 +22,26 @@
   "files": [
     "dist"
   ],
+  "keywords": [
+    "babel",
+    "lint",
+    "prop-types",
+    "react",
+    "typescript"
+  ],
+  "license": "MIT",
   "main": "dist/index.js",
   "private": false,
   "publishConfig": {
     "access": "public"
   },
+  "repository": "dry-lint/dry-lint",
   "scripts": {
     "build": "bun run clean && tsc -b",
     "check-types": "tsc -b --noEmit",
     "clean": "bunx rimraf dist/* dist",
     "lint": "eslint \"src/**/*.ts\"",
+    "prepublishOnly": "bun run build && bun run test",
     "test": "vitest",
     "test:ci": "vitest run"
   },

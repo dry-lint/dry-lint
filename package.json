@@ -1,5 +1,7 @@
 {
   "name": "dry-lint",
+  "description": "Detect duplicate or near-duplicate type definitions in TypeScript codebases.",
+  "author": "Lodewijk Wensveen",
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",
     "@changesets/cli": "^2.29.5",
@@ -14,13 +16,20 @@
   "engines": {
     "node": ">=22"
   },
+  "keywords": [
+    "cli",
+    "duplicate",
+    "types",
+    "typescript"
+  ],
+  "license": "MIT",
   "packageManager": "bun@1.2.17",
   "private": true,
   "scripts": {
     "build": "turbo run build",
     "changeset": "bunx changeset",
-    "changeset:version": "bunx changeset version",
     "changeset:publish": "bunx changeset publish",
+    "changeset:version": "bunx changeset version",
     "check-types": "turbo run check-types",
     "dev": "turbo run dev",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",

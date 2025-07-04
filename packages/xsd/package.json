@@ -1,6 +1,8 @@
 {
   "name": "@dry-lint/xsd",
+  "description": "Detect duplicate or near-duplicate definitions in XML Schema Definition (XSD) files.",
   "version": "1.0.1",
+  "author": "Lodewijk Wensveen",
   "dependencies": {
     "@dry-lint/core": "1.0.1",
     "fast-xml-parser": "^5.2.5"
@@ -18,16 +20,27 @@
   "files": [
     "dist"
   ],
+  "keywords": [
+    "lint",
+    "parser",
+    "schema",
+    "typescript",
+    "xml",
+    "xsd"
+  ],
+  "license": "MIT",
   "main": "dist/index.js",
   "private": false,
   "publishConfig": {
     "access": "public"
   },
+  "repository": "dry-lint/dry-lint",
   "scripts": {
     "build": "bun run clean && tsc -b",
     "check-types": "tsc -b --noEmit",
     "clean": "bunx rimraf dist/* dist",
     "lint": "eslint \"src/**/*.ts\"",
+    "prepublishOnly": "bun run build && bun run test",
     "test": "vitest",
     "test:ci": "vitest run"
   },

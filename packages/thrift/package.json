@@ -1,6 +1,8 @@
 {
   "name": "@dry-lint/thrift",
+  "description": "Detect duplicate or near-duplicate definitions in Apache Thrift IDL files.",
   "version": "1.0.1",
+  "author": "Lodewijk Wensveen",
   "dependencies": {
     "@creditkarma/thrift-parser": "^2.0.0",
     "@dry-lint/core": "1.0.1"
@@ -18,16 +20,26 @@
   "files": [
     "dist"
   ],
+  "keywords": [
+    "idl",
+    "lint",
+    "parser",
+    "thrift",
+    "typescript"
+  ],
+  "license": "MIT",
   "main": "dist/index.js",
   "private": false,
   "publishConfig": {
     "access": "public"
   },
+  "repository": "dry-lint/dry-lint",
   "scripts": {
     "build": "bun run clean && tsc -b",
     "check-types": "tsc -b --noEmit",
     "clean": "bunx rimraf dist/* dist",
     "lint": "eslint \"src/**/*.ts\"",
+    "prepublishOnly": "bun run build && bun run test",
     "test": "vitest",
     "test:ci": "vitest run"
   },

@@ -1,19 +1,22 @@
 {
   "name": "@dry-lint/zod",
+  "description": "Detect duplicate or near-duplicate Zod schema definitions using AST parsing.",
   "version": "1.0.1",
+  "author": "Lodewijk Wensveen",
   "dependencies": {
     "@babel/generator": "^7.28.0",
     "@babel/parser": "^7.28.0",
     "@babel/traverse": "^7.28.0",
-    "@dry-lint/core": "1.0.1",
-    "@types/babel__generator": "^7.27.0"
+    "@dry-lint/core": "1.0.1"
   },
   "devDependencies": {
+    "@types/babel__generator": "^7.27.0",
     "@types/babel__traverse": "^7.20.7",
     "@types/node": "^24.0.10",
     "eslint": "^9.30.1",
     "rimraf": "^6.0.1",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">=18"
@@ -21,20 +24,32 @@
   "files": [
     "dist"
   ],
+  "keywords": [
+    "ast",
+    "babel",
+    "lint",
+    "schema",
+    "typescript",
+    "zod"
+  ],
+  "license": "MIT",
   "main": "dist/index.js",
   "private": false,
   "publishConfig": {
     "access": "public"
   },
+  "repository": "dry-lint/dry-lint",
   "scripts": {
     "build": "bun run clean && tsc -b",
     "check-types": "tsc -b --noEmit",
     "clean": "bunx rimraf dist/* dist",
     "lint": "eslint \"src/**/*.ts\"",
+    "prepublishOnly": "bun run build && bun run test",
     "test": "vitest run",
     "test:ci": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest"
   },
-  "type": "module"
+  "type": "module",
+  "types": "dist/index.d.ts"
 }
