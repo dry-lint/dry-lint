@@ -27,13 +27,22 @@ jobs:
           TAR=$(npm pack)
           SIZE_BYTES=$(stat -c%s "$TAR")
           SIZE_KB=$(awk "BEGIN {printf \"%.1f\", $SIZE_BYTES/1024}")
-          echo "CLI size = $SIZE_KB kB"
+          echo "–> CLI tarball: $TAR"
+          echo "–> CLI size: $SIZE_BYTES bytes → $SIZE_KB kB"
           cd ../..
 
-          # Replace the badge block in README.md in one go:
+          # Show what we're about to replace
+          echo "Before replacement:"
+          grep -o "badge/cli%20size-[0-9]\+\.[0-9]\+%20kB-blue" README.md || echo "(none found)"
+
+          # Do the in-place replace of just the number
           sed -i -E \
-            "s|(https://img\.shields\.io/badge/cli%20size-)[0-9]+\.[0-9]+(%20kB-blue)|\1${SIZE_KB}\2|" \
+            "s|(badge/cli%20size-)[0-9]+\.[0-9]+(%20kB-blue)|\1${SIZE_KB}\2|" \
             README.md
+
+          # Verify it worked
+          echo "After replacement:"
+          grep -o "badge/cli%20size-[0-9]\+\.[0-9]\+%20kB-blue" README.md || echo "(none found)"
 
       - name: Commit & push badge update
         run: |
