@@ -6,6 +6,8 @@ on:
 
 jobs:
   size:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -31,18 +33,9 @@ jobs:
           echo "–> CLI size: $SIZE_BYTES bytes → $SIZE_KB kB"
           cd ../..
 
-          # Show what we're about to replace
-          echo "Before replacement:"
-          grep -o "badge/cli%20size-[0-9]\+\.[0-9]\+%20kB-blue" README.md || echo "(none found)"
-
-          # Do the in-place replace of just the number
           sed -i -E \
             "s|(badge/cli%20size-)[0-9]+\.[0-9]+(%20kB-blue)|\1${SIZE_KB}\2|" \
             README.md
-
-          # Verify it worked
-          echo "After replacement:"
-          grep -o "badge/cli%20size-[0-9]\+\.[0-9]\+%20kB-blue" README.md || echo "(none found)"
 
       - name: Commit & push badge update
         run: |
