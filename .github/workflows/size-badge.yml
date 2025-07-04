@@ -39,9 +39,14 @@ jobs:
 
       - name: Commit & push badge update
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add README.md
-          git diff --quiet || git commit -m "chore: update CLI size badge to ${SIZE_KB} kB" && git push
+          if git diff --quiet README.md; then
+            echo "No changes to README.md"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add README.md
+            git commit -m "chore: update CLI size badge to ${SIZE_KB} kB"
+            git push origin HEAD:main
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
