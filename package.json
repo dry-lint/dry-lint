@@ -42,6 +42,7 @@
     "test:watch": "vitest"
   },
   "trustedDependencies": [
+    "esbuild",
     "protobufjs"
   ],
   "workspaces": [

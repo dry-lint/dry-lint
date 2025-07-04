@@ -1,9 +1,7 @@
 {
   "name": "@dry-lint/integration-tests",
   "version": "1.0.1",
-  "dependencies": {
-    "@dry-lint/core": "1.0.1"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@dry-lint/core": "workspace:*",
     "@dry-lint/typescript": "workspace:*",
@@ -17,14 +15,7 @@
   "engines": {
     "node": ">=18"
   },
-  "files": [
-    "dist"
-  ],
-  "main": "dist/index.js",
-  "private": false,
-  "publishConfig": {
-    "access": "public"
-  },
+  "private": true,
   "scripts": {
     "build": "bun run clean && tsc -b",
     "check-types": "tsc -b --noEmit",
@@ -33,6 +24,5 @@
     "test": "vitest",
     "test:ci": "vitest run"
   },
-  "type": "module",
-  "types": "dist/index.d.ts"
+  "type": "module"
 }
