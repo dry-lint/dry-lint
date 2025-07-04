@@ -32,8 +32,8 @@ jobs:
 
           # Replace the badge block in README.md in one go:
           sed -i -E \
-          's|<!-- CLI_SIZE_BADGE -->.*<!-- /CLI_SIZE_BADGE -->|<!-- CLI_SIZE_BADGE -->\n![CLI size](https://img.shields.io/badge/cli%20size-'"${SIZE_KB}"'%20kB-blue)\n<!-- /CLI_SIZE_BADGE -->|' \
-          README.md
+            "s|(https://img\.shields\.io/badge/cli%20size-)[0-9]+\.[0-9]+(%20kB-blue)|\1${SIZE_KB}\2|" \
+            README.md
 
       - name: Commit & push badge update
         run: |
