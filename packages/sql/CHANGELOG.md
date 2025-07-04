@@ -1,5 +1,14 @@
 # @dry-lint/sql
 
+## 1.0.3
+
+### Patch Changes
+
+- [`77f18a9`](https://github.com/dry-lint/dry-lint/commit/77f18a9d0cf1d2eedad5a54049e5515ed52724f0) Thanks [@lwensveen](https://github.com/lwensveen)! - Formatted readme badges
+
+- Updated dependencies [[`77f18a9`](https://github.com/dry-lint/dry-lint/commit/77f18a9d0cf1d2eedad5a54049e5515ed52724f0)]:
+  - @dry-lint/core@1.0.3
+
 ## 1.0.2
 
 ### Patch Changes
