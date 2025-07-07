@@ -1,10 +1,10 @@
 {
   "name": "@dry-lint/graphql",
   "description": "Detect duplicate or near-duplicate definitions in GraphQL schemas.",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "author": "Lodewijk Wensveen",
   "dependencies": {
-    "@dry-lint/core": "1.0.3",
+    "@dry-lint/core": "1.0.4",
     "graphql": "^16.11.0"
   },
   "devDependencies": {
