@@ -1,7 +1,12 @@
-name: Bump Versions
+name: Version Packages
+
+permissions:
+  contents: write
+  pull-requests: write
 
 on:
-  pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -24,5 +29,6 @@ jobs:
           version: true
           commit: 'chore: version packages'
           title: 'chore: version packages'
+          branch: changeset-release/main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
