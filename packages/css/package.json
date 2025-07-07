@@ -1,10 +1,10 @@
 {
   "name": "@dry-lint/css",
   "description": "Detect duplicate or near-duplicate CSS, SCSS, and Less definitions using PostCSS.",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "author": "Lodewijk Wensveen",
   "dependencies": {
-    "@dry-lint/core": "1.0.3",
+    "@dry-lint/core": "1.0.4",
     "postcss": "^8.5.6",
     "postcss-less": "^6.0.0",
     "postcss-scss": "^4.0.9"

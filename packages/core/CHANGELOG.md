@@ -1,5 +1,11 @@
 # @dry-lint/core
 
+## 1.0.4
+
+### Patch Changes
+
+- [#5](https://github.com/dry-lint/dry-lint/pull/5) [`b17414a`](https://github.com/dry-lint/dry-lint/commit/b17414a44539366b65089b0db98a13c9a5e059d1) Thanks [@lwensveen](https://github.com/lwensveen)! - Cleaned up READMEs
+
 ## 1.0.3
 
 ### Patch Changes

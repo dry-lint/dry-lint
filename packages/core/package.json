@@ -1,7 +1,7 @@
 {
   "name": "@dry-lint/core",
   "description": "Core lint logic and types for dry-lint plugins.",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "author": "Lodewijk Wensveen",
   "dependencies": {},
   "devDependencies": {
