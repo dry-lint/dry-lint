@@ -23,4 +23,4 @@
 '@dry-lint/zod': patch
 ---
 
-Cleaned up READMEs
+Cleaned up readmes
