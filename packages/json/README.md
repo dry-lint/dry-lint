@@ -8,7 +8,7 @@ Extracts keys, structures, and nested shapes from **JSON files** (`.json`) so yo
 
 ---
 
-## 📦 Install
+## Install
 
 ```bash
 bun add -D @dry-lint/json
@@ -16,7 +16,7 @@ bun add -D @dry-lint/json
 
 ---
 
-## ⚙️ Configure
+## Configure
 
 Add it to your `.drylintrc.json`:
 
@@ -30,13 +30,13 @@ Run detection with the [CLI](https://www.npmjs.com/package/@dry-lint/cli). This 
 
 ---
 
-## 📚 More
+## More
 
 - [Monorepo & Other Plugins](https://github.com/dry-lint/dry-lint#-packages)
 - [Core API Docs](https://github.com/dry-lint/dry-lint#-api-dry-core)
 
 ---
 
-## 📄 License
+## License
 
 MIT — see [LICENSE](https://github.com/dry-lint/dry-lint/blob/main/LICENSE).

@@ -8,7 +8,7 @@ This package provides the **core engine**: APIs to register custom extractors, n
 
 ---
 
-## 📦 Install
+## Install
 
 ```bash
 bun add @dry-lint/core
@@ -34,7 +34,7 @@ See [Writing a Plugin](https://github.com/dry-lint/dry-lint#-writing-a-plugin) f
 
 ---
 
-## 📚 More
+## More
 
 - [Monorepo & Plugins](https://github.com/dry-lint/dry-lint#-packages)
 - [Official CLI](https://www.npmjs.com/package/@dry-lint/cli)
@@ -42,6 +42,6 @@ See [Writing a Plugin](https://github.com/dry-lint/dry-lint#-writing-a-plugin) f
 
 ---
 
-## 📄 License
+## License
 
 MIT — see [LICENSE](https://github.com/dry-lint/dry-lint/blob/main/LICENSE).
