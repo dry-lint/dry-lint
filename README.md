@@ -8,11 +8,11 @@
 - **CLI** – fast, cached, and interactive (`npx dry`).
 - **Extractors** – small packages (plugins) you add only when you need them.
 
-> ⚡ **Performance‑first:** incremental file caching, parallel parsing, and optional fuzzy grouping.
+> **Performance‑first:** incremental file caching, parallel parsing, and optional fuzzy grouping.
 
 ---
 
-## 📦 Packages
+## Packages
 
 | Package        | npm                        | What it extracts                |
 | -------------- | -------------------------- | ------------------------------- |
@@ -42,7 +42,7 @@
 
 ---
 
-## 🚀 Quick start
+## Quick start
 
 ```bash
 # 1 – install cli + the plugins you need
@@ -72,7 +72,7 @@ If **no `.drylintrc`** is found, the CLI falls back to _auto‑discovering_ ever
 
 ---
 
-## 📚 Using the Core API
+## Using the Core API
 
 ```ts
 import { registerExtractor, findDuplicates, Declaration } from '@dry-lint/core';
@@ -86,15 +86,15 @@ const results = findDuplicates(['src/**/*.ts']);
 console.log(results);
 ```
 
-See the [Writing a Plugin](#-writing-a-plugin) section below for more detail.
+See the [Writing a Plugin](#writing-a-plugin) section below for more detail.
 
 ---
 
-## 🔌 Writing a Plugin
+## Writing a Plugin
 
 1. `bun add -D @dry-lint/core` in a new package under `packages/`.
 2. Implement `registerExtractor` in your entrypoint.
-3. Publish as `@dry-lint/my‑plugin`. ✅ That’s it – users list it in `.drylintrc.json`.
+3. Publish as `@dry-lint/my‑plugin`. That’s it – users list it in `.drylintrc.json`.
 
 ```ts
 import { registerExtractor, Declaration } from '@dry-lint/core';
@@ -107,7 +107,7 @@ registerExtractor((filePath, source): Declaration[] => {
 
 ---
 
-## 🏗 Workspace & Build
+## Workspace & Build
 
 We use **Turborepo** for fast, cached pipelines.
 
@@ -118,7 +118,7 @@ bun run test    # runs Vitest across the monorepo
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork, then create a feature branch.
 2. Add or update a plugin under `packages/`.
@@ -127,6 +127,6 @@ bun run test    # runs Vitest across the monorepo
 
 ---
 
-## 📄 License
+## License
 
 MIT ©
