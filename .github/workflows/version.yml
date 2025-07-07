@@ -29,6 +29,5 @@ jobs:
           version: true
           commit: 'chore: version packages'
           title: 'chore: version packages'
-          branch: changeset-release/main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
