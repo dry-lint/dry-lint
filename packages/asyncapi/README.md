@@ -8,7 +8,7 @@ This plugin extracts operations, components, and message schemas from **AsyncAPI
 
 ---
 
-## 📦 Install
+## Install
 
 ```bash
 bun add -D @dry-lint/asyncapi
@@ -16,7 +16,7 @@ bun add -D @dry-lint/asyncapi
 
 ---
 
-## ⚙️ Configure
+## Configure
 
 Add it to your `.drylintrc.json`:
 
@@ -30,13 +30,13 @@ Then run detection with the [CLI](https://www.npmjs.com/package/@dry-lint/cli). 
 
 ---
 
-## 📚 More
+## More
 
 - [Monorepo & Other Plugins](https://github.com/dry-lint/dry-lint#-packages)
 - [Core API Docs](https://github.com/dry-lint/dry-lint#-api-dry-core)
 
 ---
 
-## 📄 License
+## License
 
 MIT — see [LICENSE](https://github.com/dry-lint/dry-lint/blob/main/LICENSE).

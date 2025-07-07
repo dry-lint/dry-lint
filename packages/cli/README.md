@@ -7,7 +7,7 @@ Detect duplicate declarations in TypeScript, Zod, OpenAPI, GraphQL, and more —
 
 ---
 
-## 📦 Install
+## Install
 
 Add the CLI **and** the plugins you want:
 
@@ -18,7 +18,7 @@ bun add -D @dry-lint/cli @dry-lint/typescript @dry-lint/zod
 
 ---
 
-## ⚙️ Configure
+## Configure
 
 Create a `.drylintrc.json` to specify which extractors to load:
 
@@ -52,7 +52,7 @@ npx dry [projectDir] [options]
 
 ---
 
-## 📚 Resources
+## Resources
 
 - [Monorepo & Plugin List](https://github.com/dry-lint/dry-lint#-packages)
 - [Core API](https://github.com/dry-lint/dry-lint#-api-dry-core)
@@ -60,6 +60,6 @@ npx dry [projectDir] [options]
 
 ---
 
-## 📄 License
+## License
 
 MIT — see [LICENSE](https://github.com/dry-lint/dry-lint/blob/main/LICENSE).
