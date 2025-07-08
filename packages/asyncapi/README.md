@@ -33,7 +33,7 @@ Then run detection with the [CLI](https://www.npmjs.com/package/@dry-lint/cli). 
 ## More
 
 - [Monorepo & Other Plugins](https://github.com/dry-lint/dry-lint#-packages)
-- [Core API Docs](https://github.com/dry-lint/dry-lint#-api-dry-core)
+- [Core API Docs](https://github.com/dry-lint/dry-lint#-api-dry-lint)
 
 ---
 

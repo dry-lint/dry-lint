@@ -28,7 +28,7 @@ Create a `.drylintrc.json` to specify which extractors to load:
 }
 ```
 
-If no config is present, the CLI will auto-load all installed `@dry-lint/*` packages (except `core` and `cli`).
+If no config is present, the CLI will auto-load all installed `@dry-lint/*` packages (except `dry-lint` and `cli`).
 
 ---
 
@@ -55,7 +55,7 @@ npx dry [projectDir] [options]
 ## Resources
 
 - [Monorepo & Plugin List](https://github.com/dry-lint/dry-lint#-packages)
-- [Core API](https://github.com/dry-lint/dry-lint#-api-dry-core)
+- [Core API](https://github.com/dry-lint/dry-lint#-api-dry-lint)
 - [Full Documentation](https://dry-lint.github.io/dry-lint/)
 
 ---

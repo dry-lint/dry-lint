@@ -1,5 +1,5 @@
 import yaml from 'js-yaml';
-import { Declaration, registerExtractor } from '@dry-lint/core';
+import { Declaration, registerExtractor } from '@dry-lint/dry-lint';
 
 /**
  * Describes the shape of a Kubernetes resource for duplicate detection.

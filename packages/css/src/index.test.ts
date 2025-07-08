@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 // Register the CSS extractor plugin before running tests
 import '../src/index';
-import { findDuplicates } from '@dry-lint/core';
+import { findDuplicates } from '@dry-lint/dry-lint';
 
 /**
  * Tests for the CSS extractor plugin across plain CSS, SCSS, and Less files.

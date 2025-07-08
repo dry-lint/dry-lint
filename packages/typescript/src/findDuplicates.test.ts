@@ -3,7 +3,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { describe, expect, it } from 'vitest';
-import { findDuplicates } from '@dry-lint/core';
+import { findDuplicates } from '@dry-lint/dry-lint';
 
 /**
  * Helper to create a temporary directory with provided files,

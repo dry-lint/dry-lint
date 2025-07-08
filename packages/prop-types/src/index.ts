@@ -1,4 +1,4 @@
-import { Declaration, registerExtractor } from '@dry-lint/core';
+import { Declaration, registerExtractor } from '@dry-lint/dry-lint';
 import { parse } from '@babel/parser';
 import traverse from '@babel/traverse';
 import * as t from '@babel/types';

@@ -3,7 +3,7 @@ import os from 'os';
 import path from 'path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../src/index';
-import { findDuplicates } from '@dry-lint/core';
+import { findDuplicates } from '@dry-lint/dry-lint';
 
 // helpers
 const mk = () => fs.mkdtempSync(path.join(os.tmpdir(), 'graphql-'));

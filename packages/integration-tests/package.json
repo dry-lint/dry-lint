@@ -3,10 +3,10 @@
   "version": "1.0.2",
   "dependencies": {},
   "devDependencies": {
-    "@dry-lint/core": "workspace:*",
+    "@dry-lint/dry-lint": "1.0.0",
     "@dry-lint/typescript": "workspace:*",
     "@dry-lint/zod": "workspace:*",
-    "@types/node": "^24.0.10",
+    "@types/node": "^24.0.11",
     "eslint": "^9.30.1",
     "rimraf": "^6.0.1",
     "typescript": "^5.8.3",

@@ -2,19 +2,18 @@ import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { _clearRegistryForTests } from '@dry-lint/dry-lint';
 
-// ────────── helpers ─────────────────────────────────────────────────────────
 const tmpFile = (dir: string, name: string, contents: string) => {
   const p = path.join(dir, name);
   fs.writeFileSync(p, contents);
   return p;
 };
 
-// Load the plugin only *after* mocks are in place so registerExtractor
-// receives the mocked deps.
 const loadPlugin = async () => {
-  await import('./index.js'); // adjust path as needed
-  const { findDuplicates } = await import('@dry-lint/core');
+  _clearRegistryForTests();
+  await import('./index.js');
+  const { findDuplicates } = await import('@dry-lint/dry-lint');
   return { findDuplicates };
 };
 
@@ -22,11 +21,10 @@ describe('Kubernetes YAML extractor', () => {
   const consoleErr = vi.spyOn(console, 'error').mockImplementation(() => {});
 
   afterEach(() => {
-    vi.resetModules(); // fresh plugin instance per test
+    vi.resetModules();
     vi.clearAllMocks();
   });
 
-  // 1 ────────────────────────────────────────────────────────────────────────
   it('extracts multiple resources from one file – no duplicates', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'k8s-ok-'));
     const main = tmpFile(
@@ -49,7 +47,6 @@ spec: { replicas: 1 }`
     expect(groups).toHaveLength(0);
   });
 
-  // 2 ────────────────────────────────────────────────────────────────────────
   it('detects duplicates across files', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'k8s-dupe-'));
     const content = `
@@ -68,7 +65,6 @@ data: { k: v }`;
     expect(groups[0]!.decls.map(d => d.location.name)).toEqual(['foo', 'foo']);
   });
 
-  // 3 ────────────────────────────────────────────────────────────────────────
   it('handles YAML parse errors (error branch)', async () => {
     vi.doMock('js-yaml', () => ({
       loadAll: () => {
@@ -81,16 +77,13 @@ data: { k: v }`;
 
     const { findDuplicates } = await loadPlugin();
     const groups = await findDuplicates([bad], { threshold: 1, json: true });
-    expect(groups).toHaveLength(0); // extractor returned []
-    expect(consoleErr).toHaveBeenCalled(); // logged parse error
+    expect(groups).toHaveLength(0);
+    expect(consoleErr).toHaveBeenCalled();
   });
 
-  // 4 ────────────────────────────────────────────────────────────────────────
   it('falls back to UnknownKind and <no-name> when fields are missing', async () => {
     vi.doMock('js-yaml', () => ({
-      loadAll: () => [
-        { apiVersion: 'v1' }, // missing kind + metadata.name
-      ],
+      loadAll: () => [{ apiVersion: 'v1' }],
     }));
 
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'k8s-fallback-'));
@@ -98,10 +91,9 @@ data: { k: v }`;
 
     const { findDuplicates } = await loadPlugin();
     const groups = await findDuplicates([dummy], { threshold: 1, json: true });
-    expect(groups).toHaveLength(0); // only one decl, no dupes
+    expect(groups).toHaveLength(0);
   });
 
-  // 5 ────────────────────────────────────────────────────────────────────────
   it('does not report below-threshold similarity as duplicate', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'k8s-thresh-'));
     const svc = tmpFile(

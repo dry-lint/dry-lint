@@ -1,11 +1,14 @@
 {
-  "name": "@dry-lint/core",
-  "description": "Core lint logic and types for dry-lint plugins.",
-  "version": "1.0.4",
-  "author": "Lodewijk Wensveen",
-  "dependencies": {},
+  "name": "@dry-lint/dry-lint",
+  "description": "Core singleton registry and shared utilities for Dry Lint plugins.",
+  "version": "1.0.0",
+  "dependencies": {
+    "fast-levenshtein": "^3.0.0",
+    "ts-morph": "^26.0.0"
+  },
   "devDependencies": {
-    "@types/node": "^24.0.10",
+    "@types/fast-levenshtein": "^0.0.4",
+    "@types/node": "^24.0.11",
     "eslint": "^9.30.1",
     "rimraf": "^6.0.1",
     "typescript": "^5.8.3",
@@ -14,27 +17,27 @@
   "engines": {
     "node": ">=18"
   },
+  "exports": {
+    ".": "./dist/index.js",
+    "./registry": "./dist/registry.js",
+    "./ts-project": "./dist/ts-project.js"
+  },
   "files": [
     "dist"
   ],
-  "keywords": [
-    "core",
-    "lint",
-    "plugin",
-    "typescript"
-  ],
-  "license": "MIT",
   "main": "dist/index.js",
+  "peerDependencies": {
+    "@dry-lint/dry-lint": "1.0.0"
+  },
   "private": false,
   "publishConfig": {
     "access": "public"
   },
-  "repository": "dry-lint/dry-lint.git",
   "scripts": {
     "build": "bun run clean && tsc -b",
     "check-types": "tsc -b --noEmit",
-    "clean": "bunx rimraf dist/* dist",
-    "lint": "eslint \"src/**/*.ts\"",
+    "clean": "bunx rimraf dist/* dist tsconfig.tsbuildinfo",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "size": "pkg-size .",
     "test": "vitest run",
     "test:ci": "vitest run",

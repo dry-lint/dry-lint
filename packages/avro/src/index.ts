@@ -1,4 +1,4 @@
-import { Declaration, registerExtractor } from '@dry-lint/core';
+import { Declaration, registerExtractor } from '@dry-lint/dry-lint';
 
 /**
  * Represents a single field within an Avro record.

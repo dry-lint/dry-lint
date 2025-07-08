@@ -4,7 +4,7 @@ import * as t from '@babel/types';
 import { describe, expect, it } from 'vitest';
 import { flattenZodType } from './index.js';
 import '@dry-lint/zod';
-import { collectDeclarations } from '@dry-lint/core';
+import { collectDeclarations } from '@dry-lint/dry-lint';
 
 /**
  * Utility to parse a code snippet and extract the first CallExpression node.

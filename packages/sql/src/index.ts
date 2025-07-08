@@ -1,4 +1,4 @@
-import { Declaration, registerExtractor } from '@dry-lint/core';
+import { Declaration, registerExtractor } from '@dry-lint/dry-lint';
 import { Parser } from 'node-sql-parser';
 
 // Initialize a SQL parser instance targeting MySQL dialect

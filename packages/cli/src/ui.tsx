@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Text, useApp, useInput } from 'ink';
 import Spinner from 'ink-spinner';
 import path from 'path';
-import { DupGroup, findDuplicates } from '@dry-lint/core';
+import { DupGroup, findDuplicates } from '@dry-lint/dry-lint';
 import { globby } from 'globby';
 
 export function DryUIRender({
