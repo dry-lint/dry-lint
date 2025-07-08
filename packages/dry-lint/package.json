@@ -1,7 +1,7 @@
 {
   "name": "@dry-lint/dry-lint",
   "description": "Core singleton registry and shared utilities for Dry Lint plugins.",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "dependencies": {
     "fast-levenshtein": "^3.0.0",
     "ts-morph": "^26.0.0"
@@ -18,16 +18,25 @@
     "node": ">=18"
   },
   "exports": {
-    ".": "./dist/index.js",
-    "./registry": "./dist/registry.js",
-    "./ts-project": "./dist/ts-project.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./registry": {
+      "types": "./dist/registry.d.ts",
+      "default": "./dist/registry.js"
+    },
+    "./ts-project": {
+      "types": "./dist/ts-project.d.ts",
+      "default": "./dist/ts-project.js"
+    }
   },
   "files": [
     "dist"
   ],
   "main": "dist/index.js",
   "peerDependencies": {
-    "@dry-lint/dry-lint": "1.0.0"
+    "@dry-lint/dry-lint": "2.0.0"
   },
   "private": false,
   "publishConfig": {

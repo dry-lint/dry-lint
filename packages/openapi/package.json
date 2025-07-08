@@ -1,16 +1,16 @@
 {
   "name": "@dry-lint/openapi",
   "description": "Detect duplicate or near-duplicate definitions in OpenAPI and Swagger documents.",
-  "version": "1.0.4",
+  "version": "2.0.0",
   "author": "Lodewijk Wensveen",
   "dependencies": {
     "@apidevtools/swagger-parser": "^12.0.0",
-    "@dry-lint/dry-lint": "1.0.0",
+    "@dry-lint/dry-lint": "2.0.0",
     "openapi3-ts": "^4.5.0",
     "swagger-schema-official": "^2.0.0-bab6bed"
   },
   "devDependencies": {
-    "@dry-lint/dry-lint": "1.0.0",
+    "@dry-lint/dry-lint": "2.0.0",
     "@types/node": "^24.0.11",
     "@types/swagger-schema-official": "^2.0.25",
     "eslint": "^9.30.1",
@@ -33,7 +33,7 @@
   "license": "MIT",
   "main": "dist/index.js",
   "peerDependencies": {
-    "@dry-lint/dry-lint": "1.0.0"
+    "@dry-lint/dry-lint": "2.0.0"
   },
   "private": false,
   "publishConfig": {

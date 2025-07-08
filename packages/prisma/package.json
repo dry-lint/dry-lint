@@ -1,14 +1,14 @@
 {
   "name": "@dry-lint/prisma",
   "description": "Detect duplicate or near-duplicate definitions in Prisma schema files.",
-  "version": "1.0.4",
+  "version": "2.0.0",
   "author": "Lodewijk Wensveen",
   "dependencies": {
-    "@dry-lint/dry-lint": "1.0.0",
+    "@dry-lint/dry-lint": "2.0.0",
     "@mrleebo/prisma-ast": "^0.13.0"
   },
   "devDependencies": {
-    "@dry-lint/dry-lint": "1.0.0",
+    "@dry-lint/dry-lint": "2.0.0",
     "@types/node": "^24.0.11",
     "eslint": "^9.30.1",
     "rimraf": "^6.0.1",
@@ -30,7 +30,7 @@
   "license": "MIT",
   "main": "dist/index.js",
   "peerDependencies": {
-    "@dry-lint/dry-lint": "1.0.0"
+    "@dry-lint/dry-lint": "2.0.0"
   },
   "private": false,
   "publishConfig": {

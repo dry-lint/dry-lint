@@ -1,9 +1,9 @@
 {
   "name": "@dry-lint/integration-tests",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "dependencies": {},
   "devDependencies": {
-    "@dry-lint/dry-lint": "1.0.0",
+    "@dry-lint/dry-lint": "2.0.0",
     "@dry-lint/typescript": "workspace:*",
     "@dry-lint/zod": "workspace:*",
     "@types/node": "^24.0.11",
