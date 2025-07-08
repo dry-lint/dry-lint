@@ -1,4 +1,4 @@
-import { Declaration, registerExtractor } from '@dry-lint/core';
+import { Declaration, registerExtractor } from '@dry-lint/dry-lint';
 import { parse as parseHcl } from '@evops/hcl-terraform-parser';
 
 /**

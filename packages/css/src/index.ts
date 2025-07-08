@@ -2,7 +2,7 @@ import path from 'path';
 import postcss, { AtRule, Declaration as CssDecl, Root, Rule } from 'postcss';
 import syntaxScss from 'postcss-scss';
 import syntaxLess from 'postcss-less';
-import { Declaration, registerExtractor } from '@dry-lint/core';
+import { Declaration, registerExtractor } from '@dry-lint/dry-lint';
 
 /**
  * Registers an extractor to parse CSS, SCSS, and Less files and emit

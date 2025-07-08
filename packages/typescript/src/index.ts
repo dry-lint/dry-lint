@@ -17,7 +17,7 @@ import {
   TypeReferenceNode,
   UnionTypeNode,
 } from 'ts-morph';
-import { Declaration, registerExtractor } from '@dry-lint/core';
+import { Declaration, registerExtractor } from '@dry-lint/dry-lint';
 
 /**
  * Normalize an InterfaceDeclaration into a serializable shape.

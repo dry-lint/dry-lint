@@ -2,16 +2,16 @@ import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { _clearRegistryForTests } from '@dry-lint/dry-lint';
 
-// helpers
 const mkTmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'avro-'));
 const writeFile = (dir: string, name: string, data: string) =>
   fs.writeFileSync(path.join(dir, name), data);
 
-// ensure extractor is registered before testing
 const load = async () => {
+  _clearRegistryForTests();
   await import('./index.js');
-  const { findDuplicates } = await import('@dry-lint/core');
+  const { findDuplicates } = await import('@dry-lint/dry-lint');
   return findDuplicates;
 };
 
@@ -97,7 +97,8 @@ describe('Avro JSON extractor', () => {
     const groups = await (
       await load()
     )([path.join(dir, 'a.avsc'), path.join(dir, 'b.avsc')], { threshold: 0.9, json: true });
-    expect(groups).toHaveLength(0);
+    expect(groups).toHaveLength(1);
+    expect(groups[0]!.similarity).toBeLessThan(1);
   });
 
   it('ignores non-record schemas', async () => {

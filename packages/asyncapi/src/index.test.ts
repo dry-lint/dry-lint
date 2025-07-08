@@ -2,6 +2,7 @@ import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { _clearRegistryForTests } from '@dry-lint/dry-lint';
 
 // utility
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'asyncapi-'));
@@ -10,8 +11,9 @@ const file = (dir: string, name: string, contents: string) =>
 
 // lazy-load extractor after any mocks
 const load = async () => {
+  _clearRegistryForTests();
   await import('./index.js');
-  const { findDuplicates } = await import('@dry-lint/core');
+  const { findDuplicates } = await import('@dry-lint/dry-lint');
   return findDuplicates;
 };
 

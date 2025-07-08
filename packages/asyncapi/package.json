@@ -5,11 +5,12 @@
   "author": "Lodewijk Wensveen",
   "dependencies": {
     "@asyncapi/parser": "^3.4.0",
-    "@dry-lint/core": "1.0.4",
+    "@dry-lint/dry-lint": "1.0.0",
     "yaml": "^2.8.0"
   },
   "devDependencies": {
-    "@types/node": "^24.0.10",
+    "@dry-lint/dry-lint": "1.0.0",
+    "@types/node": "^24.0.11",
     "eslint": "^9.30.1",
     "rimraf": "^6.0.1",
     "typescript": "^5.8.3",
@@ -29,6 +30,9 @@
   ],
   "license": "MIT",
   "main": "dist/index.js",
+  "peerDependencies": {
+    "@dry-lint/dry-lint": "1.0.0"
+  },
   "private": false,
   "publishConfig": {
     "access": "public"

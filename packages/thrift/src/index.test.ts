@@ -3,7 +3,7 @@ import os from 'os';
 import path from 'path';
 import { describe, expect, it } from 'vitest';
 import '../src/index';
-import { findDuplicates } from '@dry-lint/core';
+import { findDuplicates } from '@dry-lint/dry-lint';
 
 /**
  * Test suite for the Thrift IDL extractor plugin.

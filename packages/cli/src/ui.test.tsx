@@ -6,9 +6,13 @@ import { DryUI, DryUIRender, printGroup } from './ui.js';
 vi.mock('globby', () => ({
   globby: async () => [],
 }));
-vi.mock('@dry-lint/core', () => ({
-  findDuplicates: async () => [],
-}));
+vi.mock(
+  '@dry-lint/dry-lint',
+
+  () => ({
+    findDuplicates: async () => [],
+  })
+);
 
 describe('DryUIRender', () => {
   it('shows spinner when scanning', () => {

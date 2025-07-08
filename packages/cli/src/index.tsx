@@ -5,7 +5,7 @@
  * Responsibilities
  *  • Parse CLI flags.
  *  • Discover and load extractors (plugins).
- *  • Delegate duplicate detection to @dry-lint/core.
+ *  • Delegate duplicate detection to @dry-lint/dry-lint.
  */
 
 import fs from 'fs';
@@ -14,7 +14,8 @@ import path from 'path';
 import { render } from 'ink';
 import { Command } from 'commander';
 import { globby } from 'globby';
-import { findDuplicates } from '@dry-lint/core';
+import { findDuplicates } from '@dry-lint/dry-lint';
+
 import { DryUI } from './ui.js';
 import { loadConfig } from './loadConfig.js';
 
@@ -56,7 +57,7 @@ async function bootstrapPlugins(cwd: string) {
         unknown
       >;
       plugins = Object.keys(deps).filter(
-        n => n.startsWith('@dry-lint/') && !['@dry-lint/core', '@dry-lint/cli'].includes(n)
+        n => n.startsWith('@dry-lint/') && !['@dry-lint/dry-lint', '@dry-lint/cli'].includes(n)
       );
     } catch {
       // No package.json – ignore.

@@ -1,4 +1,4 @@
-import { DupGroup } from './index.js';
+import { DupGroup } from '@dry-lint/dry-lint';
 import fs from 'fs';
 
 /**

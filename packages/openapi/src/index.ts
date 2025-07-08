@@ -1,4 +1,4 @@
-import { Declaration, registerExtractor } from '@dry-lint/core';
+import { Declaration, registerExtractor } from '@dry-lint/dry-lint';
 import SwaggerParser from '@apidevtools/swagger-parser';
 import YAML from 'yaml';
 

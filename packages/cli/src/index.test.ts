@@ -10,17 +10,21 @@ import path from 'path';
  * ---------------------------------------------------------------------------
  * 1. Stub all external dependencies _before_ loading the CLI module.
  *    - globby → fixed list of files
- *    - @dry-lint/core → spyable stubs for `findDuplicates` / `registerExtractor`
+ *    - @dry-lint/dry-lint → spyable stubs for `findDuplicates` / `registerExtractor`
  *    - loadConfig → returns an empty plugin list to avoid I/O
  *    - ink.render → stub so no real UI is rendered during tests
  */
 
 vi.mock('globby', () => ({ globby: vi.fn(async () => ['/abs/f1.ts']) }));
 
-vi.mock('@dry-lint/core', () => ({
-  findDuplicates: vi.fn(async () => []),
-  registerExtractor: vi.fn(),
-}));
+vi.mock(
+  '@dry-lint/dry-lint',
+
+  () => ({
+    findDuplicates: vi.fn(async () => []),
+    registerExtractor: vi.fn(),
+  })
+);
 
 vi.mock('./loadConfig.js', () => ({ loadConfig: async () => ({ plugins: [] }) }));
 
@@ -29,9 +33,9 @@ vi.mock('ink', async () => {
   return { ...actual, render: vi.fn().mockReturnValue({ waitUntilExit: async () => {} }) };
 });
 
-// CLI must be imported _after_ mocks so it picks up the stubs.
 import { run, program } from './index.js';
-import { findDuplicates } from '@dry-lint/core';
+import { findDuplicates } from '@dry-lint/dry-lint';
+
 import * as ink from 'ink';
 
 /**

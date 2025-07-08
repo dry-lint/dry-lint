@@ -4,7 +4,7 @@ import os from 'os';
 import path from 'path';
 import '@dry-lint/typescript';
 import '@dry-lint/zod';
-import { findDuplicates } from '@dry-lint/core';
+import { findDuplicates } from '@dry-lint/dry-lint';
 
 function writeFiles(tmp: string, files: Record<string, string>) {
   for (const [name, src] of Object.entries(files)) {

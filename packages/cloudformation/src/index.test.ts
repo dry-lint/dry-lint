@@ -2,6 +2,7 @@ import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { _clearRegistryForTests } from '@dry-lint/dry-lint';
 
 // helpers
 const mkTmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'cfn-'));
@@ -10,8 +11,9 @@ const writeFile = (dir: string, name: string, data: string) =>
 
 // load extractor
 const load = async () => {
+  _clearRegistryForTests();
   await import('./index.js');
-  const { findDuplicates } = await import('@dry-lint/core');
+  const { findDuplicates } = await import('@dry-lint/dry-lint');
   return findDuplicates;
 };
 
