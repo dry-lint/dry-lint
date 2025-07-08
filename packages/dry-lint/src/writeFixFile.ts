@@ -1,5 +1,5 @@
-import { DupGroup } from '@dry-lint/dry-lint';
 import fs from 'fs';
+import { DupGroup } from './types.js';
 
 /**
  * Writes a TypeScript file with type aliases for exact duplicate groups.
