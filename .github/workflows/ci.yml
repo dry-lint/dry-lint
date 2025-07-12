@@ -92,7 +92,11 @@ jobs:
       - name: Fail if CLI > 200 kB gz
         run: |
           SIZE=$(bunx pkg-size ./packages/cli --json \
-                 | jq -r '.[0].gzip // .[0].gzipped // .gzip // .gzipped')
+                 | jq -r '
+                     if type=="array" then (.[0].gzip // .[0].gzipped)
+                     else (.gzip // .gzipped)
+                     end // 0
+                   ')
           echo "CLI gzipped size: $((SIZE/1024)) kB"
           test "$SIZE" -le $((200*1024)) || {
             echo "❌ CLI exceeds 200 kB gzipped" >&2
