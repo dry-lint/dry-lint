@@ -1,59 +1,72 @@
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
-import { describe, expect, it } from 'vitest';
-import '../src/index';
+import { describe, expect, it, vi } from 'vitest';
 import { findDuplicates } from '@dry-lint/dry-lint';
+import './index';
 
-/**
- * Test suite for the Protocol Buffers extractor plugin.
- * Validates extraction of message and enum definitions and duplicate detection.
- */
-describe('Protocol Buffers plugin', () => {
-  it('extracts messages and enums from a single .proto file', async () => {
-    // Create a temporary directory and write a .proto file with message and enum
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-proto-'));
-    const protoContent = `
-      syntax = "proto3";
-      message User {
-        int32 id = 1;
-        string name = 2;
-      }
-      enum Role {
-        ADMIN = 0;
-        USER = 1;
-      }
-    `;
-    const protoFile = path.join(tmpDir, 'defs.proto');
-    fs.writeFileSync(protoFile, protoContent);
+const tmpDir = () => fs.mkdtempSync(path.join(os.tmpdir(), 'dry-proto-'));
 
-    // Run duplicate detection; expect no duplicate groups since declarations differ
-    const groups = await findDuplicates([protoFile], { threshold: 1, json: true });
-    expect(groups).toHaveLength(0);
+function write(dir: string, name: string, content: string) {
+  fs.writeFileSync(path.join(dir, name), content);
+}
+
+describe('Protocol Buffers extractor plugin', () => {
+  it('logs and skips on parse error', async () => {
+    const dir = tmpDir();
+    const file = path.join(dir, 'broken.proto');
+    write(dir, 'broken.proto', 'not a proto');
+
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const groups = await findDuplicates([file], { threshold: 1, json: true });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('⚠️ Proto parse error in'),
+      expect.anything()
+    );
+    expect(groups).toEqual([]);
+    spy.mockRestore();
   });
 
-  it('detects duplicate message definitions across multiple .proto files', async () => {
-    // Create a temporary directory and two .proto files defining the same message
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-proto-dup-'));
-    const messageDef = `
+  it('extracts and deduplicates messages and enums', async () => {
+    const dir = tmpDir();
+    const content = `
       syntax = "proto3";
-      message Foo { int32 x = 1; }
+      message User { int32 id = 1; string name = 2; }
+      enum Role { ADMIN = 0; USER = 1; }
     `;
-    const fileA = path.join(tmpDir, 'a.proto');
-    const fileB = path.join(tmpDir, 'b.proto');
-    fs.writeFileSync(fileA, messageDef);
-    fs.writeFileSync(fileB, messageDef);
+    const a = path.join(dir, 'a.proto');
+    const b = path.join(dir, 'b.proto');
+    write(dir, 'a.proto', content);
+    write(dir, 'b.proto', content);
 
-    // Run duplicate detection on both files at full similarity threshold
-    const groups = await findDuplicates([fileA, fileB], { threshold: 1, json: true });
+    const groups = await findDuplicates([a, b], { threshold: 1, json: true });
+    expect(groups).toHaveLength(2);
 
-    // Expect exactly one duplicate group for the Foo message
-    expect(groups).toHaveLength(1);
-    const group = groups[0]!;
-    expect(group.similarity).toBe(1);
+    const names = groups.map(g => g.decls.map(d => d.location.name).sort());
+    expect(names).toContainEqual(['User', 'User']);
+    expect(names).toContainEqual(['Role', 'Role']);
+  });
 
-    // Both declarations should reference the message name 'Foo'
-    const names = group.decls.map(d => d.location.name).sort();
-    expect(names).toEqual(['Foo', 'Foo']);
+  it('handles nested messages recursion', async () => {
+    const dir = tmpDir();
+    const content = `
+      syntax = "proto3";
+      package pkg;
+      message Outer {
+        message Inner { int32 x = 1; }
+        int32 y = 2;
+      }
+    `;
+    const a = path.join(dir, 'a.proto');
+    const b = path.join(dir, 'b.proto');
+    write(dir, 'a.proto', content);
+    write(dir, 'b.proto', content);
+
+    const groups = await findDuplicates([a, b], { threshold: 1, json: true });
+    const names = groups.map(g => g.decls.map(d => d.location.name).sort());
+
+    expect(names).toContainEqual(['pkg.Outer', 'pkg.Outer']);
+    expect(names).toContainEqual(['pkg.Outer.Inner', 'pkg.Outer.Inner']);
   });
 });

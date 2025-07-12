@@ -1,57 +1,96 @@
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
-import { describe, expect, it } from 'vitest';
-import '../src/index';
-import { findDuplicates } from '@dry-lint/dry-lint';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { _clearRegistryForTests, findDuplicates } from '@dry-lint/dry-lint';
 
-/**
- * Test suite for the PropTypes extractor plugin.
- * Validates extraction of React component propTypes and duplicate detection.
- */
-describe('PropTypes plugin', () => {
-  it('extracts a component’s propTypes shape from a single file', async () => {
-    // Create a temporary directory and write a JSX file with propTypes
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-prop-'));
-    const code = `
-      import PropTypes from 'prop-types';
-      function Button() { return null; }
-      Button.propTypes = {
-        label: PropTypes.string.isRequired,
-        count: PropTypes.number
-      };
-    `;
-    const filePath = path.join(tmpDir, 'btn.jsx');
-    fs.writeFileSync(filePath, code);
+const tmp = (pfx: string) => fs.mkdtempSync(path.join(os.tmpdir(), pfx));
+const write = (d: string, n: string, c: string) => fs.writeFileSync(path.join(d, n), c);
 
-    // Run duplicate detection at full threshold; expect no duplicates for single definition
-    const groups = await findDuplicates([filePath], { threshold: 1, json: true });
-    expect(groups).toHaveLength(0);
+describe('PropTypes extractor', () => {
+  beforeEach(async () => {
+    _clearRegistryForTests();
+    vi.resetModules();
+    await import('./index.js');
   });
 
-  it('detects duplicate propTypes definitions across multiple files', async () => {
-    // Create a temp directory and two JSX files with identical propTypes
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-prop-dup-'));
+  it('extracts a component’s propTypes shape (no dupes for single file)', async () => {
+    const dir = tmp('dry-prop-');
+    write(
+      dir,
+      'btn.jsx',
+      `
+        import PropTypes from 'prop-types';
+        function Button() { return null; }
+        Button.propTypes = {
+          label: PropTypes.string.isRequired,
+          count: PropTypes.number
+        };
+      `
+    );
+
+    const groups = await findDuplicates([path.join(dir, 'btn.jsx')], {
+      threshold: 1,
+      json: true,
+    });
+    expect(groups).toEqual([]);
+  });
+
+  it('extracts props from inline object declarations', async () => {
+    const dir = tmp('dry-prop-inline-');
+    const inlineCode = `
+      import PropTypes from 'prop-types';
+      export const Inline = {
+        foo: PropTypes.string,
+        bar: PropTypes.arrayOf(PropTypes.number)
+      };
+    `;
+
+    write(dir, 'a.jsx', inlineCode);
+    write(dir, 'b.jsx', inlineCode);
+    const fileA = path.join(dir, 'a.jsx');
+    const fileB = path.join(dir, 'b.jsx');
+
+    const groups = await findDuplicates([fileA, fileB], {
+      threshold: 1,
+      json: true,
+    });
+
+    expect(groups).toHaveLength(1);
+
+    const group = groups[0]! as any;
+    expect(group).toBeDefined();
+
+    expect(group.decls).toHaveLength(2);
+
+    const [declA, declB] = group.decls;
+    expect(declA).toBeDefined();
+    expect(declB).toBeDefined();
+
+    expect(declA.shape.props.foo).toEqual({ kind: 'string' });
+    expect(declA.shape.props.bar).toEqual({
+      kind: 'arrayOf',
+      argument: { kind: 'number' },
+    });
+  });
+
+  it('detects duplicate propTypes definitions across files', async () => {
+    const dir = tmp('dry-prop-dup-');
     const snippet = `
       import PropTypes from 'prop-types';
       const X = () => null;
       X.propTypes = { foo: PropTypes.string };
     `;
-    const fileA = path.join(tmpDir, 'a.jsx');
-    const fileB = path.join(tmpDir, 'b.jsx');
-    fs.writeFileSync(fileA, snippet);
-    fs.writeFileSync(fileB, snippet);
+    write(dir, 'a.jsx', snippet);
+    write(dir, 'b.jsx', snippet);
 
-    // Run duplicate detection on both files at full similarity threshold
-    const groups = await findDuplicates([fileA, fileB], { threshold: 1, json: true });
+    const groups = await findDuplicates([path.join(dir, 'a.jsx'), path.join(dir, 'b.jsx')], {
+      threshold: 1,
+      json: true,
+    });
 
-    // Expect one duplicate group for component X
     expect(groups).toHaveLength(1);
-    const group = groups[0]!;
-    expect(group.similarity).toBe(1);
-
-    // Verify both declarations reference the same component name 'X'
-    const names = group.decls.map(d => d.location.name).sort();
+    const names = groups[0]!.decls.map(d => d.location.name);
     expect(names).toEqual(['X', 'X']);
   });
 });

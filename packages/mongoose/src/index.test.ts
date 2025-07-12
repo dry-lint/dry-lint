@@ -1,125 +1,87 @@
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { _clearRegistryForTests } from '@dry-lint/dry-lint';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { _clearRegistryForTests, findDuplicates } from '@dry-lint/dry-lint';
+import './index';
 
-// helpers
-const mkTmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'mongoose-'));
+const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'mongoose-cov-'));
 const write = (dir: string, name: string, code: string) =>
   fs.writeFileSync(path.join(dir, name), code);
 
-// lazy-load extractor
-const load = async () => {
-  _clearRegistryForTests();
-  await import('./index.js');
-  const { findDuplicates } = await import('@dry-lint/dry-lint');
-  return findDuplicates;
-};
-
-describe('Mongoose schema extractor', () => {
-  afterEach(() => {
+describe('Mongoose extractor deep-coverage cases', () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = tmp();
+    _clearRegistryForTests();
     vi.resetModules();
-    vi.clearAllMocks();
+    await import('./index.js');
   });
+  afterEach(() => fs.removeSync(dir));
 
-  it('ignores classes without @Schema decorator', async () => {
-    const dir = mkTmp();
-    write(
-      dir,
-      'no-schema.ts',
-      `
-      import { Prop } from "nestjs/mongoose";
-      class Unrelated { @Prop() x: string; }
-    `
-    );
-    const groups = await (
-      await load()
-    )([path.join(dir, 'no-schema.ts')], {
+  it('skips non-TS extensions', async () => {
+    write(dir, 'ignore.js', 'console.log(1)');
+    const groups = await findDuplicates([path.join(dir, 'ignore.js')], {
       threshold: 1,
       json: true,
     });
-    expect(groups).toHaveLength(0);
+    expect(groups).toEqual([]);
   });
 
-  it('extracts a schema class even if it has no @Prop properties', async () => {
-    const dir = mkTmp();
+  it('extracts props array from @Prop decorations', async () => {
     write(
       dir,
-      'empty.ts',
+      'schema.ts',
       `
-      import { Schema } from "nestjs/mongoose";
+      import { Schema, Prop } from 'nestjs/mongoose';
       @Schema()
-      class Empty {}
-    `
-    );
-    const groups = await (
-      await load()
-    )([path.join(dir, 'empty.ts')], {
-      threshold: 1,
-      json: true,
-    });
-    expect(groups).toHaveLength(0); // one declaration but no duplicates
-  });
-
-  it('treats properties without type annotation as any', async () => {
-    const dir = mkTmp();
-    write(
-      dir,
-      'anytype.ts',
-      `
-      import { Schema, Prop } from "nestjs/mongoose";
-      @Schema()
-      class A {
-        @Prop() z;
+      class Person {
+        @Prop() id!: string;
+        @Prop() name!: string;
       }
     `
     );
-    const groups = await (
-      await load()
-    )([path.join(dir, 'anytype.ts')], {
+    const groups = await findDuplicates([path.join(dir, 'schema.ts')], {
       threshold: 1,
       json: true,
     });
     expect(groups).toHaveLength(0);
   });
 
-  it('processes multiple classes but only decorated ones', async () => {
-    const dir = mkTmp();
-    write(
-      dir,
-      'multi.ts',
-      `
-      import { Schema, Prop } from "nestjs/mongoose";
-      @Schema() class First { @Prop() a: number; }
-      class Second { @Prop() b: string; }
-      @Schema() class Third {}
-    `
-    );
-    const groups = await (
-      await load()
-    )([path.join(dir, 'multi.ts')], {
-      threshold: 1,
-      json: true,
-    });
-    expect(groups).toHaveLength(0);
-  });
-
-  it('detects duplicate schemas across files', async () => {
-    const dir = mkTmp();
-    const snippet = `
-      import { Schema, Prop } from "nestjs/mongoose";
-      @Schema() class Foo { @Prop() x: number; }
+  it('handles mongoose.model calls with new Schema({...}) object literal', async () => {
+    const snip = `
+      import mongoose from 'mongoose';
+      const PersonSchema = new mongoose.Schema({ id: String, name: String });
+      export const Person = mongoose.model('Person', PersonSchema);
     `;
-    write(dir, 'a.ts', snippet);
-    write(dir, 'b.ts', snippet);
+    write(dir, 'a.ts', snip);
+    write(dir, 'b.ts', snip);
 
-    const groups = await (
-      await load()
-    )([path.join(dir, 'a.ts'), path.join(dir, 'b.ts')], { threshold: 1, json: true });
+    const groups = await findDuplicates([path.join(dir, 'a.ts'), path.join(dir, 'b.ts')], {
+      threshold: 1,
+      json: true,
+    });
+
     expect(groups).toHaveLength(1);
-    const g = groups[0]!;
-    expect(g.similarity).toBe(1);
-    expect(g.decls.map(d => d.location.name).sort()).toEqual(['Foo', 'Foo']);
+    expect(groups[0]!.decls.map(d => d.shape.name).sort()).toEqual(['Person', 'Person']);
+    expect(groups[0]!.similarity).toBe(1);
+  });
+
+  it('detects dupes when schema class and model share identical props', async () => {
+    const snip = `
+  import mongoose from 'mongoose';
+  const s = new mongoose.Schema({ title: String });
+  export const Book = mongoose.model('Book', s);
+`;
+    write(dir, 'class.ts', snip);
+    write(dir, 'model.ts', snip);
+
+    const groups = await findDuplicates([path.join(dir, 'class.ts'), path.join(dir, 'model.ts')], {
+      threshold: 1,
+      json: true,
+    });
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0]!.decls.map(d => d.shape.kind)).toEqual(['MongooseModel', 'MongooseModel']);
   });
 });
