@@ -8,8 +8,8 @@
     "ts-morph": "^26.0.0"
   },
   "devDependencies": {
-    "@types/node": "^24.0.12",
-    "eslint": "^9.30.1",
+    "@types/node": "^24.0.13",
+    "eslint": "^9.31.0",
     "rimraf": "^6.0.1",
     "typescript": "^5.8.3"
   },
