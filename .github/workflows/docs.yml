@@ -10,24 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: oven-sh/setup-bun@v2
+      - name: Setup Node & Bun
+        uses: ./.github/actions/setup-node-bun
         with:
-          bun-version: latest
-
-      - name: Cache Bun & node_modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.bun
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+          node-version: '22'
+          bun-version: 'latest'
 
       - name: Build all packages
         run: bun run build
@@ -46,3 +33,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs
+          publish_branch: gh-pages
