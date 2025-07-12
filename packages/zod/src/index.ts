@@ -1,8 +1,24 @@
 import { Declaration, registerExtractor } from '@dry-lint/dry-lint';
 import { parse } from '@babel/parser';
-import traverse from '@babel/traverse';
 import * as t from '@babel/types';
+import _trv from '@babel/traverse';
 import { generate } from '@babel/generator';
+
+/**
+ *  Babel’s `@babel/traverse` ships both CJS and ESM builds.
+ *  This little shim makes sure we always get the callable function.
+ */
+type NodePath<T extends t.Node = t.Node> = _trv.NodePath<T>;
+const traverse: typeof _trv = typeof _trv === 'function' ? _trv : (_trv as any).default;
+
+interface ZodObjectShape {
+  kind: 'Interface';
+  name: string;
+  props: { name: string; optional: boolean; readonly: boolean; type: string }[];
+  typeParams: never[];
+  index: never[];
+  calls: never[];
+}
 
 /**
  * Convert a Zod schema expression into a concise string representation.
@@ -39,8 +55,10 @@ export function flattenZodType(expr: t.Expression): string {
  * - Finds "const X = z.object({...})" definitions
  * - Flattens property types and builds a normalized interface shape
  */
-registerExtractor((filePath, fileText): Declaration[] => {
-  const declarations: Declaration[] = [];
+registerExtractor((filePath, fileText): Declaration<ZodObjectShape>[] => {
+  if (!/\.[cm]?[jt]sx?$/.test(filePath)) return [];
+
+  const declarations: Declaration<ZodObjectShape>[] = [];
   // Parse file supporting TS and JSX syntax
   const ast = parse(fileText, {
     sourceType: 'module',
@@ -49,9 +67,9 @@ registerExtractor((filePath, fileText): Declaration[] => {
 
   // Traverse AST to locate Zod object declarations
   traverse(ast, {
-    VariableDeclarator(path: { node: { id: any; init: any } }) {
+    VariableDeclarator(path: NodePath<t.VariableDeclarator>) {
       const { id, init } = path.node;
-      // Match patterns like: const Foo = z.object({ ... });
+
       if (
         t.isIdentifier(id) &&
         t.isCallExpression(init) &&
@@ -75,21 +93,18 @@ registerExtractor((filePath, fileText): Declaration[] => {
             })
             .sort((a, b) => a.name.localeCompare(b.name));
 
-          // Build shape matching TS interface normal form
-          const normProps = props.map(({ name, type }) => ({
-            name,
-            optional: false,
-            readonly: false,
-            type,
-          }));
-
-          const shape = {
+          const shape: ZodObjectShape = {
             kind: 'Interface',
             name,
-            typeParams: [] as any[],
-            props: normProps,
-            index: [] as any[],
-            calls: [] as any[],
+            props: props.map(({ name, type }) => ({
+              name,
+              type,
+              optional: false,
+              readonly: false,
+            })),
+            typeParams: [],
+            index: [],
+            calls: [],
           };
 
           // Emit the declaration for this Zod object
