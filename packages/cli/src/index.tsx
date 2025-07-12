@@ -15,9 +15,10 @@ import { render } from 'ink';
 import { Command } from 'commander';
 import { globby } from 'globby';
 import { findDuplicates } from '@dry-lint/dry-lint';
-
 import { DryUI } from './ui.js';
 import { loadConfig } from './loadConfig.js';
+import { DryLintConfig } from './configSchema.js';
+import os from 'node:os';
 
 /**
  * CLI definition
@@ -34,8 +35,15 @@ program
   .option('--fix', 'Generate a fix file for exact matches')
   .option('--ignore <patterns...>', 'Glob patterns to ignore', [])
   .option('--no-cache', 'Disable file caching')
+  .option('--progress', 'Show progress bar (default)', true)
+  .option('--no-progress', 'Disable progress bar')
   .option('--ui', 'Launch interactive Ink UI')
-  .parse();
+  .option(
+    '--pool <n>',
+    'Max worker threads (default: logical cores)',
+    v => parseInt(v, 10),
+    os.cpus().length
+  );
 
 /**
  * Load and register the requested plugins.
@@ -76,6 +84,19 @@ async function bootstrapPlugins(cwd: string) {
   return cfg;
 }
 
+function mergeConfig(fileCfg: DryLintConfig, cli: Record<string, any>): DryLintConfig {
+  return {
+    ...fileCfg,
+    ...cli,
+    ignore: [
+      ...(fileCfg.ignore ?? []),
+      ...(Array.isArray(cli.ignore) ? cli.ignore : cli.ignore ? [cli.ignore] : []),
+    ],
+    pool: cli.pool,
+    progress: cli.progress,
+  };
+}
+
 /**
  * Main execution entry.
  */
@@ -90,39 +111,42 @@ export async function run(argv = process.argv.slice(2)) {
     process.exit(1);
   }
 
-  await bootstrapPlugins(projectDir);
+  const fileCfg = await bootstrapPlugins(projectDir);
+  const cfg = mergeConfig(fileCfg, opts);
 
   try {
     const includePatterns = [
-      '**/*.{ts,tsx,js,jsx,json,yaml,yml,graphql,gql,proto,thrift,sql,xsd,tf}',
+      // generic data / config
+      '**/*.{json,yaml,yml,avsc,avro,avro.json,prisma,sql,tf}',
+      // schemas & IDLs
+      '**/*.{proto,thrift,xsd,graphql,gql}',
+      // code
+      '**/*.{js,jsx,ts,tsx}',
+      // stylesheets
+      '**/*.{css,scss,less}',
     ];
-    const ignoreGlobs: string[] = Array.isArray(opts.ignore) ? opts.ignore : [opts.ignore];
 
     const filePaths = await globby(includePatterns, {
       cwd: projectDir,
       absolute: true,
-      ignore: ignoreGlobs,
+      ignore: cfg.ignore,
     });
 
-    const outFilePath = opts.out
-      ? path.isAbsolute(opts.out)
-        ? opts.out
-        : path.join(projectDir, opts.out)
+    const outFilePath = cfg.out
+      ? path.isAbsolute(cfg.out)
+        ? cfg.out
+        : path.join(projectDir, cfg.out)
       : undefined;
 
-    if (opts.ui) {
-      render(<DryUI projectPath={projectDir} threshold={opts.threshold} />);
+    if (cfg.ui) {
+      render(<DryUI projectPath={projectDir} threshold={cfg.threshold} />);
       return;
     }
 
     await findDuplicates(filePaths, {
-      threshold: opts.threshold,
-      json: opts.json,
-      sarif: opts.sarif,
-      fix: opts.fix,
+      ...cfg,
       outFile: outFilePath,
-      ignore: ignoreGlobs,
-      cache: opts.noCache !== true,
+      progress: cfg.progress,
     });
   } catch (err: any) {
     console.error(err.message || err);

@@ -1,11 +1,5 @@
 import { cosmiconfig } from 'cosmiconfig';
-
-export interface DryLintConfig {
-  /** NPM package names of plugins to load */
-  plugins?: string[];
-  /** CLI flags that should override config */
-  [key: string]: unknown;
-}
+import { configSchema, DryLintConfig } from './configSchema.js';
 
 export async function loadConfig(cwd = process.cwd()): Promise<DryLintConfig> {
   const explorer = cosmiconfig('drylint', {
@@ -21,5 +15,15 @@ export async function loadConfig(cwd = process.cwd()): Promise<DryLintConfig> {
   });
 
   const result = await explorer.search(cwd);
-  return (result?.config as DryLintConfig) ?? {};
+  const raw = result?.config ?? {};
+
+  const parsed = configSchema.safeParse(raw);
+  if (!parsed.success) {
+    console.error('❌  Invalid .drylintrc\n');
+    for (const e of parsed.error.issues) {
+      console.error(`• ${e.path.join('.')}: ${e.message}`);
+    }
+    process.exit(1);
+  }
+  return parsed.data;
 }
