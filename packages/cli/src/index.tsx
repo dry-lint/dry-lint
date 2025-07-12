@@ -19,6 +19,7 @@ import { DryUI } from './ui.js';
 import { loadConfig } from './loadConfig.js';
 import { DryLintConfig } from './configSchema.js';
 import os from 'node:os';
+import { pathToFileURL } from 'node:url';
 
 /**
  * CLI definition
@@ -74,7 +75,8 @@ async function bootstrapPlugins(cwd: string) {
 
   for (const id of plugins) {
     try {
-      await import(id);
+      const spec = path.isAbsolute(id) ? pathToFileURL(id).href : id;
+      await import(spec);
       console.log(`Loaded plugin: ${id}`);
     } catch (err) {
       console.error(`Unable to load plugin “${id}”`, err);
