@@ -1,58 +1,126 @@
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
-import { describe, expect, it } from 'vitest';
-import '../src/index';
+import { describe, expect, it, vi } from 'vitest';
 import { findDuplicates } from '@dry-lint/dry-lint';
+import * as thriftParser from '@creditkarma/thrift-parser';
+import './index';
 
-/**
- * Test suite for the Thrift IDL extractor plugin.
- * Validates correct extraction of structs and enums and duplicate detection.
- */
-describe('Thrift IDL plugin', () => {
-  it('extracts struct and enum definitions from a single .thrift file', async () => {
-    // Prepare a temporary directory and write a .thrift file
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-thrift-'));
-    const thriftContent = `
-      struct User {
-        1: i32 id;
-        2: string name;
-      }
+vi.mock('@creditkarma/thrift-parser', () => ({
+  parse: vi.fn(),
+}));
 
-      enum Role {
-        ADMIN = 1,
-        USER = 2
-      }
-    `;
-    const thriftFile = path.join(tmpDir, 'defs.thrift');
-    fs.writeFileSync(thriftFile, thriftContent);
+const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'dry-thrift-'));
+const write = (dir: string, name: string, content: string) =>
+  fs.writeFileSync(path.join(dir, name), content);
 
-    // Run duplicate detection; expect two distinct declarations and no duplicates
-    const groups = await findDuplicates([thriftFile], { threshold: 1, json: true });
-    expect(groups).toHaveLength(0);
+describe('Thrift extractor plugin', () => {
+  it('ignores non-.thrift files', async () => {
+    const dir = tmp();
+    write(dir, 'foo.txt', 'dummy');
+    const groups = await findDuplicates([path.join(dir, 'foo.txt')], { threshold: 1, json: true });
+    expect(thriftParser.parse as any).not.toHaveBeenCalled();
+    expect(groups).toEqual([]);
   });
 
-  it('detects duplicate struct definitions across separate .thrift files', async () => {
-    // Create two temporary .thrift files defining the same struct
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dry-thrift-dup-'));
-    const structSnippet = `
-      struct Foo {
-        1: i32 x;
-      }
-    `;
-    const fileA = path.join(tmpDir, 'a.thrift');
-    const fileB = path.join(tmpDir, 'b.thrift');
-    fs.writeFileSync(fileA, structSnippet);
-    fs.writeFileSync(fileB, structSnippet);
+  it('logs and skips on parse errors', async () => {
+    (thriftParser.parse as any).mockReturnValue({ type: 'ThriftErrors', errors: ['syntax fail'] });
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    // Run duplicate detection on both files with 100% similarity threshold
-    const groups = await findDuplicates([fileA, fileB], { threshold: 1, json: true });
-    // Expect exactly one duplicate group for the Foo struct
+    const dir = tmp();
+    write(dir, 'bad.thrift', 'broken');
+    const groups = await findDuplicates([path.join(dir, 'bad.thrift')], {
+      threshold: 1,
+      json: true,
+    });
+
+    expect(thriftParser.parse as any).toHaveBeenCalledWith('broken');
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('⚠️ Thrift parse errors in'), [
+      'syntax fail',
+    ]);
+    expect(groups).toEqual([]);
+    spy.mockRestore();
+  });
+
+  it('extracts struct fields using names-array branch', async () => {
+    (thriftParser.parse as any).mockReturnValue({
+      type: 'ThriftDocument',
+      body: [
+        {
+          type: 'StructDefinition',
+          name: { value: 'StructA' },
+          fields: [
+            { fieldID: { value: 2 }, name: { value: 'b' }, fieldType: { names: ['B'] } },
+            { fieldID: { value: 1 }, name: { value: 'a' }, fieldType: { names: ['A', 'X'] } },
+          ],
+        },
+      ],
+    });
+
+    const dir = tmp();
+    write(dir, 'one.thrift', '');
+    write(dir, 'two.thrift', '');
+    const one = path.join(dir, 'one.thrift');
+    const two = path.join(dir, 'two.thrift');
+
+    const groups = await findDuplicates([one, two], { threshold: 1, json: true });
     expect(groups).toHaveLength(1);
-    const group = groups[0]!;
-    expect(group.similarity).toBe(1);
-    // Verify both declarations refer to the same struct name 'Foo'
-    const structNames = group.decls.map(d => d.location.name).sort();
-    expect(structNames).toEqual(['Foo', 'Foo']);
+
+    const decl = groups[0]!.decls[0]!;
+    const fields = (decl.shape as any).fields as Array<{ id: number; name: string; type: string }>;
+    expect(fields).toEqual([
+      { id: 1, name: 'a', type: 'A.X' },
+      { id: 2, name: 'b', type: 'B' },
+    ]);
+  });
+
+  it('serializes fieldType fallback when no names array', async () => {
+    (thriftParser.parse as any).mockReturnValue({
+      type: 'ThriftDocument',
+      body: [
+        {
+          type: 'StructDefinition',
+          name: { value: 'Fallback' },
+          fields: [{ fieldID: { value: 1 }, name: { value: 'x' }, fieldType: { foo: 'bar' } }],
+        },
+      ],
+    });
+
+    const dir = tmp();
+    write(dir, 'a.thrift', '');
+    write(dir, 'b.thrift', '');
+    const groups = await findDuplicates([path.join(dir, 'a.thrift'), path.join(dir, 'b.thrift')], {
+      threshold: 1,
+      json: true,
+    });
+    expect(groups).toHaveLength(1);
+
+    const field = ((groups[0]!.decls[0]!.shape as any).fields as any[])[0];
+    expect(field.type).toBe(JSON.stringify({ foo: 'bar' }));
+  });
+
+  it('extracts enum values and deduplicates correctly', async () => {
+    (thriftParser.parse as any).mockReturnValue({
+      type: 'ThriftDocument',
+      body: [
+        {
+          type: 'EnumDefinition',
+          name: { value: 'Role' },
+          members: [{ name: { value: 'Z' } }, { name: { value: 'A' } }],
+        },
+      ],
+    });
+
+    const dir = tmp();
+    write(dir, 'x.thrift', '');
+    write(dir, 'y.thrift', '');
+    const groups = await findDuplicates([path.join(dir, 'x.thrift'), path.join(dir, 'y.thrift')], {
+      threshold: 1,
+      json: true,
+    });
+    expect(groups).toHaveLength(1);
+
+    const values = (groups[0]!.decls[0]!.shape as any).values as string[];
+    expect(values).toEqual(['A', 'Z']);
   });
 });
