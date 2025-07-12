@@ -1,5 +1,6 @@
 import { Declaration, registerExtractor } from '@dry-lint/dry-lint';
-import { Parser } from 'node-sql-parser';
+import pkg from 'node-sql-parser';
+const { Parser } = pkg;
 
 // Initialize a SQL parser instance targeting MySQL dialect
 const parser = new Parser();
@@ -11,6 +12,10 @@ const parser = new Parser();
  * - Emits a declaration for each table with its columns
  */
 registerExtractor((filePath, fileText): Declaration[] => {
+  if (!filePath.endsWith('.sql')) {
+    return [];
+  }
+
   let ast: any;
   try {
     // Attempt to parse the file's SQL contents into an AST

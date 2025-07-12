@@ -17,7 +17,11 @@ interface AsyncAPIShape {
  * Extracts AsyncAPI message declarations from a file.
  * Supports JSON and YAML document formats.
  */
-registerExtractor((filePath, fileText): Declaration[] => {
+registerExtractor((filePath, fileText): Declaration<AsyncAPIShape>[] => {
+  if (!filePath.endsWith('.json') && !filePath.endsWith('.yaml') && !filePath.endsWith('.yml')) {
+    return [];
+  }
+
   let doc: any;
 
   // Attempt to parse the file as JSON, fallback to YAML if JSON parsing fails
@@ -32,7 +36,7 @@ registerExtractor((filePath, fileText): Declaration[] => {
     }
   }
 
-  const declarations: Declaration[] = [];
+  const declarations: Declaration<AsyncAPIShape>[] = [];
   const channels = doc.channels;
 
   // Ensure channels is an object before iterating

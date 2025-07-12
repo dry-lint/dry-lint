@@ -60,7 +60,7 @@ export async function findDuplicates(
   }
 
   bar?.stop();
-  
+
   const decls = await collectDeclarations(files);
   const groups = groupDeclarations(decls, threshold);
 

@@ -15,7 +15,11 @@ interface CfnShape {
  * Registers an extractor to parse CloudFormation templates (JSON or YAML)
  * and emit resource declarations.
  */
-registerExtractor((filePath, fileText): Declaration[] => {
+registerExtractor((filePath, fileText): Declaration<CfnShape>[] => {
+  if (!filePath.endsWith('.json') && !filePath.endsWith('.yaml') && !filePath.endsWith('.yml')) {
+    return [];
+  }
+
   let template: any;
 
   // Attempt JSON parse first, fallback to YAML if JSON parsing fails
@@ -30,7 +34,7 @@ registerExtractor((filePath, fileText): Declaration[] => {
     }
   }
 
-  const declarations: Declaration[] = [];
+  const declarations: Declaration<CfnShape>[] = [];
   const resources = template?.Resources;
 
   // Ensure Resources section exists and is an object

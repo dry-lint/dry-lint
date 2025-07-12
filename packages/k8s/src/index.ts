@@ -17,7 +17,11 @@ interface K8sShape {
  * Registers an extractor to parse Kubernetes YAML manifests,
  * extracting each document's kind, metadata.name, and spec.
  */
-registerExtractor((filePath, fileText): Declaration[] => {
+registerExtractor((filePath, fileText): Declaration<K8sShape>[] => {
+  if (!filePath.endsWith('.yaml') && !filePath.endsWith('.yml')) {
+    return [];
+  }
+
   let docs: any[];
   try {
     // Parse all YAML documents in the file
@@ -27,7 +31,7 @@ registerExtractor((filePath, fileText): Declaration[] => {
     return [];
   }
 
-  const declarations: Declaration[] = [];
+  const declarations: Declaration<K8sShape>[] = [];
 
   // Iterate over each parsed document
   for (const doc of docs) {

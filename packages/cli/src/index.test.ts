@@ -1,8 +1,11 @@
-import { describe, it, beforeEach, afterEach, expect, vi, type Mock } from 'vitest';
-import fs from 'fs';
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
+import fs, { Stats } from 'fs';
 import fsPromises from 'fs/promises';
-import { Stats } from 'fs';
 import path from 'path';
+import { program, run } from './index.js';
+import { findDuplicates } from '@dry-lint/dry-lint';
+
+import * as ink from 'ink';
 
 /**
  * ---------------------------------------------------------------------------
@@ -30,13 +33,13 @@ vi.mock('./loadConfig.js', () => ({ loadConfig: async () => ({ plugins: [] }) })
 
 vi.mock('ink', async () => {
   const actual = await vi.importActual<any>('ink');
-  return { ...actual, render: vi.fn().mockReturnValue({ waitUntilExit: async () => {} }) };
+  return {
+    ...actual,
+    render: vi.fn().mockReturnValue({
+      waitUntilExit: async () => {},
+    }),
+  };
 });
-
-import { run, program } from './index.js';
-import { findDuplicates } from '@dry-lint/dry-lint';
-
-import * as ink from 'ink';
 
 /**
  * Fake fs.Stats object returned by `fs.statSync` in all tests.
@@ -112,7 +115,7 @@ describe('CLI – branch coverage (dynamic‑plugin build)', () => {
   it('honours --no-cache flag', async () => {
     vi.spyOn(program, 'opts').mockReturnValue({
       json: true,
-      noCache: true,
+      cache: false,
       ignore: [],
       threshold: 1,
     });

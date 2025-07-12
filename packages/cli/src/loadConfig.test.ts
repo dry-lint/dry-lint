@@ -1,12 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { loadConfig } from './loadConfig.js';
 
 const searchMock = vi.fn();
 
 vi.mock('cosmiconfig', () => ({
   cosmiconfig: vi.fn(() => ({ search: searchMock })),
 }));
-
-import { loadConfig } from './loadConfig.js';
 
 beforeEach(() => searchMock.mockReset());
 afterEach(() => vi.restoreAllMocks());
@@ -17,7 +16,18 @@ describe('loadConfig', () => {
     searchMock.mockResolvedValue({ config: fakeConfig });
 
     const result = await loadConfig('/fake/cwd');
-    expect(result).toEqual(fakeConfig);
+    expect(result).toEqual({
+      cache: true,
+      fix: false,
+      ignore: [],
+      json: false,
+      plugins: ['@dry-lint/typescript'],
+      pool: expect.any(Number),
+      progress: true,
+      sarif: false,
+      threshold: 1,
+      ui: false,
+    });
     expect(searchMock).toHaveBeenCalledWith('/fake/cwd');
   });
 
@@ -25,6 +35,16 @@ describe('loadConfig', () => {
     searchMock.mockResolvedValue(null);
 
     const result = await loadConfig('/missing/cwd');
-    expect(result).toEqual({});
+    expect(result).toEqual({
+      cache: true,
+      fix: false,
+      ignore: [],
+      json: false,
+      pool: expect.any(Number),
+      progress: true,
+      sarif: false,
+      threshold: 1,
+      ui: false,
+    });
   });
 });

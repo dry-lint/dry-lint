@@ -170,13 +170,12 @@ export function normalizeTuple(tu: TupleTypeNode): any {
     // Fallback: parse raw text to simple strings
     const text = tu.getText().trim();
     const inner = text.startsWith('[') && text.endsWith(']') ? text.slice(1, -1) : '';
-    const rawElems = inner
+    elements = inner
       ? inner
           .split(',')
           .map(s => s.trim())
           .filter(Boolean)
       : [];
-    elements = rawElems; // Already primitive strings
   }
 
   return { kind: 'Tuple', elements };
@@ -200,6 +199,9 @@ export function normalizeReference(ref: TypeReferenceNode): any {
  * Registers the TypeScript extractor plugin to process interfaces, type aliases, and enums.
  */
 registerExtractor((filePath, fileText): Declaration[] => {
+  if (!filePath.endsWith('.ts') && !filePath.endsWith('.mts') && !filePath.endsWith('.cts')) {
+    return [];
+  }
   // Initialize an in-memory ts-morph project to parse the source file
   const project = new Project({ useInMemoryFileSystem: true });
   project.createSourceFile(filePath, fileText);

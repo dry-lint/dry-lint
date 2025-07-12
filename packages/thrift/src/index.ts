@@ -26,6 +26,9 @@ interface ThriftField {
  * - Emits declarations for each struct and enum found
  */
 registerExtractor((filePath, fileText): Declaration[] => {
+  if (!filePath.endsWith('.thrift')) {
+    return [];
+  }
   // Parse the Thrift file into AST or errors
   const ast = parse(fileText);
 
