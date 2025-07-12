@@ -1,5 +1,6 @@
-import { hashShape, structuralSim } from './similarity.js';
+import { structuralSim } from './structuralSim.js';
 import type { Declaration, DupGroup } from './types.js';
+import { hashShape } from './hashShape.js';
 
 /**
  * Groups declarations by exact shape hash and structural similarity.

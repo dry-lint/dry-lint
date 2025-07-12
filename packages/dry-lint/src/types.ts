@@ -1,10 +1,10 @@
 /**
  * Represents a declaration emitted by an extractor plugin.
  */
-export interface Declaration {
+export interface Declaration<TShape = Record<string, unknown>> {
   id: string;
   kind: string;
-  shape: any;
+  shape: TShape;
   location: { file: string; name: string };
 }
 
@@ -24,11 +24,13 @@ export interface CoreOptions {
   ignore?: string[];
   cache?: boolean;
   outFile?: string;
+  pool?: number;
+  progress?: boolean;
 }
 
 /**
  * Signature for extractor plugins.
  */
-export type Extractor =
-  | ((filePath: string, fileText: string) => Declaration[])
-  | ((filePath: string, fileText: string) => Promise<Declaration[]>);
+export type Extractor<TShape = Record<string, unknown>> =
+  | ((filePath: string, fileText: string) => Declaration<TShape>[])
+  | ((filePath: string, fileText: string) => Promise<Declaration<TShape>[]>);

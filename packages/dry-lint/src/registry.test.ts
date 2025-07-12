@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { extractorRegistry, registerExtractor, _clearRegistryForTests } from './registry.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { _clearRegistryForTests, extractorRegistry, registerExtractor } from './registry.js';
 import type { Extractor } from './types.js';
 
 describe('extractorRegistry', () => {

@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { hashShape, structuralSim } from './similarity.js';
+import { describe, expect, it } from 'vitest';
+import { structuralSim } from './structuralSim.js';
+import { hashShape } from './hashShape.js';
 
 describe('hashShape', () => {
   it('produces a stable hash for the same shape', () => {

@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { collectDeclarations } from './collectDeclarations.js';
 import { extractorRegistry } from './registry.js';
-import type { Declaration } from './types.js';
 
 describe('collectDeclarations', () => {
   beforeEach(() => {
