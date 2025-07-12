@@ -2,7 +2,7 @@ name: Update CLI size badge
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   size:
@@ -25,7 +25,7 @@ jobs:
           path: |
             ~/.bun
             node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
