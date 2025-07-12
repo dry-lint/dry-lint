@@ -24,7 +24,15 @@ interface AvroShape {
 /**
  * Registers an extractor to parse Avro JSON schemas and emit record declarations.
  */
-registerExtractor((filePath, fileText): Declaration[] => {
+registerExtractor((filePath, fileText): Declaration<AvroShape>[] => {
+  if (
+    !filePath.endsWith('.avsc') &&
+    !filePath.endsWith('.avro') &&
+    !filePath.endsWith('.avro.json')
+  ) {
+    return [];
+  }
+
   let schema: any;
 
   // Attempt to parse the file text as JSON. If it fails, log and return no declarations.
@@ -35,7 +43,7 @@ registerExtractor((filePath, fileText): Declaration[] => {
     return [];
   }
 
-  const declarations: Declaration[] = [];
+  const declarations: Declaration<AvroShape>[] = [];
 
   /**
    * Recursively collects named record definitions from the schema.

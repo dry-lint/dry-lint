@@ -9,8 +9,12 @@ import { Declaration, registerExtractor } from '@dry-lint/dry-lint';
  * declarations for classes, custom properties, preprocessor variables, and mixins.
  */
 registerExtractor((filePath, fileText): Declaration[] => {
-  // Determine parser syntax based on file extension
   const ext = path.extname(filePath).toLowerCase();
+  if (!['.css', '.scss', '.less'].includes(ext)) {
+    return [];
+  }
+
+  // Determine parser syntax based on file extension
   const syntax = ext === '.scss' ? syntaxScss : ext === '.less' ? syntaxLess : undefined;
 
   let root: Root;
@@ -36,7 +40,7 @@ registerExtractor((filePath, fileText): Declaration[] => {
         decls.push({
           id: `${filePath}#css-class:${className}`,
           kind: 'css-class',
-          shape: { selector: `.${className}` },
+          shape: { kind: 'css-class', selector: `.${className}` },
           location: { file: filePath, name: className },
         });
       }
@@ -52,7 +56,7 @@ registerExtractor((filePath, fileText): Declaration[] => {
       decls.push({
         id: `${filePath}#css-var:${name}`,
         kind: 'css-var',
-        shape: { name, value: decl.value.trim() },
+        shape: { kind: 'css-var', name, value: decl.value.trim() },
         location: { file: filePath, name },
       });
     } else if (propName.startsWith('$') || propName.startsWith('@')) {
@@ -61,7 +65,7 @@ registerExtractor((filePath, fileText): Declaration[] => {
       decls.push({
         id: `${filePath}#css-prevar:${name}`,
         kind: 'css-prevar',
-        shape: { name, value: decl.value.trim() },
+        shape: { kind: 'css-prevar', name, value: decl.value.trim() },
         location: { file: filePath, name },
       });
     }
@@ -75,7 +79,7 @@ registerExtractor((filePath, fileText): Declaration[] => {
       decls.push({
         id: `${filePath}#css-mixin:${mixinName}`,
         kind: 'css-mixin',
-        shape: { name: mixinName },
+        shape: { kind: 'css-mixin', name: mixinName },
         location: { file: filePath, name: mixinName },
       });
     }
