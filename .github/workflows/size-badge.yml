@@ -4,35 +4,21 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: write
+
 jobs:
   size:
-    permissions:
-      contents: write
-      pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Setup Node & Bun
+        uses: ./.github/actions/setup-node-bun
         with:
-          fetch-depth: 0
+          node-version: '22'
+          bun-version: 'latest'
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Cache Bun & node_modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.bun
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install & build
-        run: |
-          bun install --frozen-lockfile
-          bun run build
+      - name: Build packages
+        run: bun run build
 
       - name: Measure tarball size & update badge
         run: |
@@ -48,11 +34,13 @@ jobs:
             "s|(badge/cli%20size-)[0-9]+\.[0-9]+(%20kB-blue)|\1${SIZE_KB}\2|" \
             README.md
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: update CLI size badge to ${{ steps.measure.outputs.size_kb }} kB"
-          title: "chore: update CLI size badge to ${{ steps.measure.outputs.size_kb }} kB"
-          branch: badge-size-update
-          body: Automatic badge update
+      - name: Commit & Push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "chore: update CLI size badge to ${{ steps.measure.outputs.size_kb }} kB [skip ci]" \
+            || echo "No change"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

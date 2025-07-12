@@ -11,31 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       artifact-name: build-output
+
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: Setup Node & Bun
-        uses: actions/setup-node@v4
+        uses: ./.github/actions/setup-node-bun
         with:
-          node-version: 22
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Cache Bun & node_modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.bun/install/cache
-            **/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+          node-version: '22'
+          bun-version: 'latest'
 
       - name: Build packages
         run: bun run build
@@ -59,36 +41,17 @@ jobs:
         node: [ 20, 22, 24 ]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Setup Node & Bun
+        uses: ./.github/actions/setup-node-bun
         with:
-          fetch-depth: 0
+          node-version: ${{ matrix.node }}
+          bun-version: 'latest'
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: build-dist
           path: ./
-
-      - name: Setup Node & Bun
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Cache Bun & node_modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.bun/install/cache
-            **/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
 
       - name: Lint
         run: bun run lint
@@ -139,28 +102,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: Setup Node & Bun
-        uses: actions/setup-node@v4
+        uses: ./.github/actions/setup-node-bun
         with:
-          node-version: 22
-      - uses: oven-sh/setup-bun@v2
-
-      - name: Cache Bun & node_modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.bun/install/cache
-            **/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+          node-version: ${{ matrix.node }}
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
