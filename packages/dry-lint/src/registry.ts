@@ -4,7 +4,7 @@ export interface ExtractorOptions<TShape = unknown> {
   isDuplicate?: (a: TShape, b: TShape) => boolean;
 }
 
-type AnyExtractor = Extractor;
+type AnyExtractor = Extractor<any>;
 const REG_KEY = Symbol.for('dry-lint.extractorRegistry');
 const g = globalThis as { [REG_KEY]?: Set<AnyExtractor> };
 

@@ -47,4 +47,21 @@ describe('loadConfig', () => {
       ui: false,
     });
   });
+
+  it('logs errors and exits when config fails validation', async () => {
+    searchMock.mockResolvedValue({ config: { threshold: 'not-a-number' } });
+
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((code?) => {
+      throw new Error(`EXIT:${code}`);
+    });
+
+    await expect(loadConfig('/bad/cwd')).rejects.toThrow('EXIT:1');
+
+    expect(errorSpy).toHaveBeenNthCalledWith(1, '❌  Invalid .drylintrc\n');
+    const issueCalls = errorSpy.mock.calls.slice(1).map(args => args[0]);
+    expect(issueCalls.some(line => line.includes('threshold'))).toBe(true);
+
+    expect(exitSpy).toHaveBeenCalledWith(1);
+  });
 });
