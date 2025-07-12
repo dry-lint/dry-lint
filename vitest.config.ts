@@ -13,7 +13,12 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['packages/*/src/**/*.{ts,tsx}'],
-      exclude: ['**/*.test.ts', '**/*.d.ts', '**/node_modules/**'],
+      exclude: [
+        'packages/dry-lint/src/types.ts',
+        '**/*.test.ts',
+        '**/*.d.ts',
+        '**/node_modules/**',
+      ],
       thresholds: {
         lines: 80,
         branches: 70,
