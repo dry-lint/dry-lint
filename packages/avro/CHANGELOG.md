@@ -1,5 +1,14 @@
 # @dry-lint/avro
 
+## 3.0.0
+
+### Patch Changes
+
+- [#12](https://github.com/dry-lint/dry-lint/pull/12) [`a8eb444`](https://github.com/dry-lint/dry-lint/commit/a8eb44440f7c592085ba585d8b01baddae9808cb) Thanks [@lwensveen](https://github.com/lwensveen)! - feat(core): introduce structural similarity & hash utilities
+
+- Updated dependencies [[`a8eb444`](https://github.com/dry-lint/dry-lint/commit/a8eb44440f7c592085ba585d8b01baddae9808cb)]:
+  - @dry-lint/dry-lint@3.0.0
+
 ## 2.0.0
 
 ### Minor Changes

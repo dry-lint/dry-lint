@@ -1,16 +1,16 @@
 {
   "name": "@dry-lint/zod",
   "description": "Detect duplicate or near-duplicate Zod schema definitions using AST parsing.",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "author": "Lodewijk Wensveen",
   "dependencies": {
     "@babel/generator": "^7.28.0",
     "@babel/parser": "^7.28.0",
     "@babel/traverse": "^7.28.0",
-    "@dry-lint/dry-lint": "2.0.0"
+    "@dry-lint/dry-lint": "3.0.0"
   },
   "devDependencies": {
-    "@dry-lint/dry-lint": "2.0.0",
+    "@dry-lint/dry-lint": "3.0.0",
     "@types/babel__generator": "^7.27.0",
     "@types/babel__traverse": "^7.20.7",
     "@types/node": "^24.0.13",
@@ -39,7 +39,7 @@
   "license": "MIT",
   "main": "dist/index.js",
   "peerDependencies": {
-    "@dry-lint/dry-lint": "2.0.0"
+    "@dry-lint/dry-lint": "3.0.0"
   },
   "private": false,
   "publishConfig": {

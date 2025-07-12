@@ -1,10 +1,10 @@
 {
   "name": "@dry-lint/avro",
   "description": "Detect duplicate or near-duplicate definitions in Avro schema files.",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "author": "Lodewijk Wensveen",
   "devDependencies": {
-    "@dry-lint/dry-lint": "2.0.0",
+    "@dry-lint/dry-lint": "3.0.0",
     "@types/node": "^24.0.13",
     "eslint": "^9.31.0",
     "rimraf": "^6.0.1",
@@ -29,7 +29,7 @@
   "license": "MIT",
   "main": "dist/index.js",
   "peerDependencies": {
-    "@dry-lint/dry-lint": "2.0.0"
+    "@dry-lint/dry-lint": "3.0.0"
   },
   "private": false,
   "publishConfig": {

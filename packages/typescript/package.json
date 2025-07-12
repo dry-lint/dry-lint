@@ -1,10 +1,10 @@
 {
   "name": "@dry-lint/typescript",
   "description": "Detect duplicate or near-duplicate TypeScript definitions using ts-morph AST parsing.",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "author": "Lodewijk Wensveen",
   "dependencies": {
-    "@dry-lint/dry-lint": "2.0.0",
+    "@dry-lint/dry-lint": "3.0.0",
     "ts-morph": "^26.0.0"
   },
   "devDependencies": {
@@ -31,7 +31,7 @@
   "license": "MIT",
   "main": "dist/index.js",
   "peerDependencies": {
-    "@dry-lint/dry-lint": "2.0.0"
+    "@dry-lint/dry-lint": "3.0.0"
   },
   "private": false,
   "publishConfig": {
