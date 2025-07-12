@@ -34,7 +34,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ~/.bun/install/cache        # Bun’s global package cache
+            ~/.bun/install/cache       
             **/node_modules             # workspaces or mono-repos
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
@@ -77,8 +77,8 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ~/.bun/install/cache        # Bun’s global package cache
-            **/node_modules             # workspaces or mono-repos
+            ~/.bun/install/cache       
+            **/node_modules
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
@@ -91,7 +91,8 @@ jobs:
 
       - name: Fail if CLI > 200 kB gz
         run: |
-          SIZE=$(bunx pkg-size ./packages/cli --json | jq '.gzipped')
+          SIZE=$(bunx pkg-size ./packages/cli --json \
+                 | jq -r '.[0].gzip // .[0].gzipped // .gzip // .gzipped')
           echo "CLI gzipped size: $((SIZE/1024)) kB"
           test "$SIZE" -le $((200*1024)) || {
             echo "❌ CLI exceeds 200 kB gzipped" >&2
@@ -118,17 +119,31 @@ jobs:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Cache Bun & node_modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.bun/install/cache       
+            **/node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install deps
+        run: bun install --frozen-lockfile
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: javascript-typescript
 
-      - name: Build
-        run: |
-          bun install --frozen-lockfile
-          bun run build
+      - name: Build for CodeQL database
+        run: bun run build
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v3
         with:
-          category: "/language:javascript-typescript"
+          category: '/language:javascript-typescript'
