@@ -49,10 +49,11 @@ jobs:
           fi
           jq '.metadata.vulnerabilities.total > 0' audit.json | grep true
 
-      - name: Build & test
-        run: |
-          bun run build
-          bun run test
+      - name: Build packages
+        run: bun run build
+
+      - name: Run Test
+        run: bun run test
 
       - name: Configure npm auth
         run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
