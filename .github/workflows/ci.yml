@@ -1,34 +1,40 @@
 name: CI
 
 on:
-  pull_request:
   push:
     branches: [main]
+  pull_request:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [22]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+  test:
+    name: Test • ${{ matrix.os }} • Node ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [20, 22, 24]
+
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ matrix.node }}
+          cache: 'bun'
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
-      - name: Install dependencies
+      - name: Install deps (cached)
         run: bun install --frozen-lockfile
 
-      - name: Build workspace
+      - name: Build packages
         run: bun run build
 
       - name: Lint
@@ -37,26 +43,74 @@ jobs:
       - name: Type-check
         run: bun run check-types
 
-      - name: Run tests
+      - name: Unit tests
         run: bun run test
 
-      - name: Fail if CLI > 200 kB gzipped
+  verify-artifacts:
+    name: 📦 Artifact checks (Node 22 • Linux)
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'bun'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install deps (cached)
+        run: bun install --frozen-lockfile
+
+      - name: Build CLI (for size check)
+        run: bun run build
+
+      - name: Fail if CLI > 200 kB gz
         run: |
           SIZE=$(bunx pkg-size ./packages/cli --json | jq '.gzipped')
-          THRESH=$((200 * 1024))
           echo "CLI gzipped size: $((SIZE/1024)) kB"
-          if [ "$SIZE" -gt "$THRESH" ]; then
-            echo "❌ CLI is too big: $((SIZE/1024)) kB gzipped (limit is 200 kB)" >&2
+          test "$SIZE" -le $((200*1024)) || {
+            echo "❌ CLI exceeds 200 kB gzipped" >&2
             exit 1
-          fi
+          }
 
       - name: Coverage
         run: bun run test:coverage
 
-      - name: Upload coverage reports to Codecov
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: dry-lint/dry-lint
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  codeql:
+    name: 🔒 CodeQL (JavaScript/TypeScript)
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+
+      - name: Build
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"

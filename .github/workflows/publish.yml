@@ -27,8 +27,27 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
+      - name: Cache Bun & node_modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.bun
+            node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: Audit dependencies
+        run: |
+          if command -v bun &> /dev/null; then
+            bun audit --json | tee audit.json
+          else
+            npm audit --json | tee audit.json
+          fi
+          jq '.metadata.vulnerabilities.total > 0' audit.json | grep true
 
       - name: Build & test
         run: |
