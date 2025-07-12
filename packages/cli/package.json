@@ -68,7 +68,7 @@
     "build": "tsc -b && bun run build:cli",
     "build:cli": "bun build src/index.tsx --outdir dist --target=node --format=esm --minify --packages external --external '@dry-lint/dry-lint' --external commander --external cosmiconfig --external globby --external ink --external react --external ink-spinner --external 'node:*'",
     "check-types": "tsc -b --noEmit",
-    "clean": "bunx rimraf dist/* dist tsconfig.tsbuildinfo",
+    "clean": "rimraf -g 'dist/*' dist tsconfig.tsbuildinfo",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "size": "pkg-size .",
     "test": "vitest run",

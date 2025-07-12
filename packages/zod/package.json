@@ -49,7 +49,7 @@
   "scripts": {
     "build": "tsc -b",
     "check-types": "tsc -b --noEmit",
-    "clean": "bunx rimraf dist/* dist tsconfig.tsbuildinfo",
+    "clean": "rimraf -g 'dist/*' dist tsconfig.tsbuildinfo",
     "lint": "eslint \"src/**/*.ts\"",
     "size": "pkg-size .",
     "test": "vitest run",
