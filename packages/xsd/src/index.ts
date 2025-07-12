@@ -85,7 +85,11 @@ function normalizeSimple(def: any): XsdShape {
  * Registers an extractor to parse XSD schema files (.xsd), handling both
  * complexType and simpleType definitions for duplicate detection.
  */
-registerExtractor((filePath, fileText): Declaration[] => {
+registerExtractor((filePath, fileText): Declaration<XsdShape>[] => {
+  if (!filePath.endsWith('.xsd')) {
+    return [];
+  }
+
   let parsed: any;
   try {
     // Parse the XSD XML into a JavaScript object
@@ -101,7 +105,7 @@ registerExtractor((filePath, fileText): Declaration[] => {
     return [];
   }
 
-  const declarations: Declaration[] = [];
+  const declarations: Declaration<XsdShape>[] = [];
 
   // Extract complexType definitions (array or single)
   const complexes = Array.isArray(schema.complexType)

@@ -4,9 +4,7 @@ import { JSONSchema7 } from 'json-schema';
 /**
  * Option structure for JSON Schema extractor (reserved for future use).
  */
-interface JsonSchemaOptions {
-  // Future extractor options could be added here
-}
+interface JsonSchemaOptions {}
 
 /**
  * Collects the root schema and its definitions from a JSON Schema document.
@@ -16,10 +14,8 @@ interface JsonSchemaOptions {
 function collectSubschemas(schema: JSONSchema7): Array<{ key: string; schema: JSONSchema7 }> {
   const out: Array<{ key: string; schema: JSONSchema7 }> = [];
 
-  // Include the root schema at pointer #/
   out.push({ key: '#/', schema });
 
-  // Include each named definition under #/definitions
   if (schema.definitions && typeof schema.definitions === 'object') {
     for (const [defName, defSchema] of Object.entries(schema.definitions)) {
       if (typeof defSchema === 'object') {
@@ -34,21 +30,22 @@ function collectSubschemas(schema: JSONSchema7): Array<{ key: string; schema: JS
   return out;
 }
 
-// Register the synchronous JSON Schema extractor plugin
-registerExtractor((filePath, fileText): Declaration[] => {
+registerExtractor((filePath, fileText): Declaration<JsonSchemaOptions>[] => {
+  if (!filePath.endsWith('.json')) {
+    return [];
+  }
+
   let raw: JSONSchema7;
 
   try {
-    // Attempt to parse the file as JSON
     raw = JSON.parse(fileText);
   } catch (err) {
     console.error(`⚠️ JSON Schema parse error in ${filePath}`, err);
     return [];
   }
 
-  const decls: Declaration[] = [];
+  const decls: Declaration<JsonSchemaOptions>[] = [];
 
-  // Emit a declaration for each subschema collected
   for (const { key, schema } of collectSubschemas(raw)) {
     decls.push({
       id: `${filePath}${key}`,

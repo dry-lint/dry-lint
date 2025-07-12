@@ -54,10 +54,13 @@ function normalizeTypeNode(node: TypeNode): any {
  * Registers an extractor that parses GraphQL SDL documents,
  * extracting object types, input object types, and enum types.
  */
-registerExtractor((filePath, fileText): Declaration[] => {
+registerExtractor((filePath, fileText): Declaration<GraphQLShape>[] => {
+  if (!filePath.endsWith('.graphql') && !filePath.endsWith('.gql')) {
+    return [];
+  }
   // Parse the GraphQL SDL into an AST
   const ast = parse(fileText);
-  const decls: Declaration[] = [];
+  const decls: Declaration<GraphQLShape>[] = [];
 
   // Iterate over all top-level definitions in the document
   for (const def of ast.definitions) {

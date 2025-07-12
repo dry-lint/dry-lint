@@ -1,5 +1,7 @@
 import { Declaration, registerExtractor } from '@dry-lint/dry-lint';
-import { parse as parseHcl } from '@evops/hcl-terraform-parser';
+import pkg from '@evops/hcl-terraform-parser';
+
+const { parse: parseHcl } = pkg;
 
 /**
  * Shape of an HCL block declaration, representing resources or variables.
@@ -19,7 +21,11 @@ interface HclShape {
  * Registers an extractor to parse Terraform HCL files (.tf), pulling out
  * managed_resources and variables as block declarations.
  */
-registerExtractor((filePath, fileText): Declaration[] => {
+registerExtractor((filePath, fileText): Declaration<HclShape>[] => {
+  if (!filePath.endsWith('.tf') && !filePath.endsWith('.tf.json')) {
+    return [];
+  }
+
   let doc: any;
   try {
     // Parse the HCL file into JSON-like structure
@@ -29,7 +35,7 @@ registerExtractor((filePath, fileText): Declaration[] => {
     return [];
   }
 
-  const declarations: Declaration[] = [];
+  const declarations: Declaration<HclShape>[] = [];
 
   // Extract managed_resources entries as resource blocks
   for (const key of Object.keys(doc.managed_resources || {})) {

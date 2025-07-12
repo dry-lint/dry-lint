@@ -8,6 +8,10 @@ import YAML from 'yaml';
  * components.schemas.
  */
 registerExtractor(async (filePath, fileText): Promise<Declaration[]> => {
+  if (!filePath.endsWith('.yaml') && !filePath.endsWith('.yml') && !filePath.endsWith('.json')) {
+    return [];
+  }
+
   let apiDoc: any;
 
   try {
@@ -25,7 +29,7 @@ registerExtractor(async (filePath, fileText): Promise<Declaration[]> => {
     return [];
   }
 
-  const declarations: Declaration[] = [];
+  const declarations: Declaration<any>[] = [];
 
   // Emit a declaration for each schema under components.schemas
   for (const [schemaName, schemaDef] of Object.entries(apiDoc.components.schemas)) {

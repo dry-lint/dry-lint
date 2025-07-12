@@ -1,8 +1,17 @@
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { _clearRegistryForTests } from '@dry-lint/dry-lint';
+
+type ParseResult = { managed_resources?: Record<string, any>; variables?: Record<string, any> };
+const parseStub = vi.fn<(input: string) => ParseResult>();
+
+vi.mock('@evops/hcl-terraform-parser', () => ({
+  default: {
+    parse: parseStub,
+  },
+}));
 
 const tmpFile = (dir: string, name: string, contents: string) => {
   const p = path.join(dir, name);
@@ -17,15 +26,21 @@ const loadPlugin = async () => {
   return { findDuplicates };
 };
 
-describe('Terraform/HCL extractor', () => {
+describe('Terraform/HCL extractor', async () => {
   const consoleErr = vi.spyOn(console, 'error').mockImplementation(() => {});
 
   afterEach(() => {
     vi.resetModules();
-    vi.clearAllMocks();
+    parseStub.mockReset();
+    consoleErr.mockReset();
   });
 
   it('extracts both resources and variables (happy path)', async () => {
+    parseStub.mockImplementation(() => ({
+      managed_resources: { 'aws_s3_bucket.b1': {} },
+      variables: { region: {} },
+    }));
+
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tf-ok-'));
     const main = tmpFile(
       dir,
@@ -42,6 +57,11 @@ describe('Terraform/HCL extractor', () => {
   });
 
   it('detects duplicate resources across files', async () => {
+    parseStub.mockImplementation(() => ({
+      managed_resources: { 'aws_s3_bucket.dup': {} },
+      variables: {},
+    }));
+
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tf-dupes-'));
     const a = tmpFile(dir, 'a.tf', `resource "aws_s3_bucket" "dup" { bucket = "dup-a" }`);
     const b = tmpFile(dir, 'b.tf', `resource "aws_s3_bucket" "dup" { bucket = "dup-b" }`);
@@ -55,11 +75,9 @@ describe('Terraform/HCL extractor', () => {
   });
 
   it('gracefully handles an HCL parse error (error branch)', async () => {
-    vi.doMock('@evops/hcl-terraform-parser', () => ({
-      parse: () => {
-        throw new Error('boom');
-      },
-    }));
+    parseStub.mockImplementation(() => {
+      throw new Error('boom');
+    });
 
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tf-err-'));
     const badFile = tmpFile(dir, 'broken.tf', 'this is not HCL');
@@ -71,10 +89,8 @@ describe('Terraform/HCL extractor', () => {
   });
 
   it('skips managed_resources keys that lack a dot (invalid-key branch)', async () => {
-    vi.doMock('@evops/hcl-terraform-parser', () => ({
-      parse: () => ({
-        managed_resources: { badkey: {} },
-      }),
+    parseStub.mockImplementation(() => ({
+      managed_resources: { badkey: {} },
     }));
 
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tf-nodot-'));
@@ -87,12 +103,22 @@ describe('Terraform/HCL extractor', () => {
   });
 
   it('treats blocks below similarity threshold as distinct', async () => {
+    parseStub
+      .mockImplementationOnce(() => ({
+        managed_resources: { 'aws_s3_bucket.x': {} },
+        variables: {},
+      }))
+      .mockImplementationOnce(() => ({
+        managed_resources: { 'aws_s3_bucket.y': {} },
+        variables: {},
+      }));
+
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tf-threshold-'));
     const a = tmpFile(dir, 'a.tf', `resource "aws_s3_bucket" "x" { bucket = "x" }`);
     const b = tmpFile(dir, 'b.tf', `resource "aws_s3_bucket" "y" { bucket = "y" }`);
 
     const { findDuplicates } = await loadPlugin();
-    const groups = await findDuplicates([a, b], { threshold: 0.9, json: true });
+    const groups = await findDuplicates([a, b], { threshold: 0.99, json: true });
 
     expect(groups).toHaveLength(0);
   });

@@ -88,17 +88,33 @@ describe('Avro JSON extractor', () => {
   });
 
   it('treats distinct records below threshold as unique', async () => {
-    const a = JSON.stringify({ type: 'record', name: 'A', fields: [] });
-    const b = JSON.stringify({ type: 'record', name: 'B', fields: [] });
+    const a = JSON.stringify({
+      type: 'record',
+      name: 'A',
+      fields: [{ name: 'x', type: 'int' }],
+    });
+
+    const b = JSON.stringify({
+      type: 'record',
+      name: 'B',
+      fields: [
+        { name: 'x', type: 'int' },
+        { name: 'y', type: 'boolean' },
+      ],
+    });
+
     const dir = mkTmp();
     writeFile(dir, 'a.avsc', a);
     writeFile(dir, 'b.avsc', b);
 
     const groups = await (
       await load()
-    )([path.join(dir, 'a.avsc'), path.join(dir, 'b.avsc')], { threshold: 0.9, json: true });
-    expect(groups).toHaveLength(1);
-    expect(groups[0]!.similarity).toBeLessThan(1);
+    )([path.join(dir, 'a.avsc'), path.join(dir, 'b.avsc')], {
+      threshold: 0.9,
+      json: true,
+    });
+
+    expect(groups).toHaveLength(0);
   });
 
   it('ignores non-record schemas', async () => {

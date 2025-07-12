@@ -1,26 +1,30 @@
 import { Declaration, registerExtractor } from '@dry-lint/dry-lint';
 import { parse } from '@babel/parser';
-import traverse from '@babel/traverse';
+import _trv from '@babel/traverse';
 import * as t from '@babel/types';
 
 /**
- * Shape of a React component's PropTypes declaration.
+ *  Babel’s `@babel/traverse` ships both CJS and ESM builds.
+ *  This little shim makes sure we always get the callable function.
  */
+type NodePath<T extends t.Node = t.Node> = _trv.NodePath<T>;
+const traverse: typeof _trv = typeof _trv === 'function' ? _trv : (_trv as any).default;
+
 interface PropTypeShape {
-  /** Always 'PropTypes' for this extractor */
-  kind: string;
-  /** Map of prop names to their normalized type definitions */
-  props: Record<string, any>;
+  kind: 'PropTypes';
+  props: Record<string, unknown>;
 }
 
 /**
- * Normalizes a PropTypes AST node into a simple object representation.
- * Supports built-in types (e.g., PropTypes.string) and calls (e.g., PropTypes.arrayOf).
- * @param node - The Babel Expression node representing a PropTypes reference
- * @returns A plain object capturing the kind and nested argument, if any
+ * Convert a PropTypes AST node into a JSON-able value so that
+ * structural similarity can be computed later on.
+ *
+ * Examples:
+ *   • `PropTypes.string`  → { kind: 'string' }
+ *   • `PropTypes.arrayOf(PropTypes.string)`
+ *            → { kind: 'arrayOf', argument: { kind: 'string' } }
  */
-function normalizePropType(node: t.Expression): any {
-  // Handle MemberExpression like PropTypes.string
+function normalise(node: t.Expression): unknown {
   if (
     t.isMemberExpression(node) &&
     t.isIdentifier(node.object, { name: 'PropTypes' }) &&
@@ -29,75 +33,90 @@ function normalizePropType(node: t.Expression): any {
     return { kind: node.property.name };
   }
 
-  // Handle CallExpression like PropTypes.arrayOf(PropTypes.string)
   if (
     t.isCallExpression(node) &&
     t.isMemberExpression(node.callee) &&
     t.isIdentifier(node.callee.object, { name: 'PropTypes' })
   ) {
-    const methodName = (node.callee.property as t.Identifier).name;
+    const calleeName = (node.callee.property as t.Identifier).name;
     const arg = node.arguments[0] as t.Expression | undefined;
-    return {
-      kind: methodName,
-      argument: arg ? normalizePropType(arg) : undefined,
-    };
+    return { kind: calleeName, argument: arg ? normalise(arg) : undefined };
   }
 
-  // Fallback for unsupported expressions
   return { kind: node.type };
 }
 
 /**
- * Registers an extractor to find React PropTypes definitions.
- * Looks for assignments of the form MyComponent.propTypes = { ... }.
+ *  Walks JS/TS files, detects
+ *    – classic assignments:   `MyComp.propTypes = { … }`
+ *    – inline objects:        `export const MyComp = { …PropTypes… }`
+ *  and emits one declaration per component.
  */
-registerExtractor((filePath, fileText): Declaration[] => {
-  const declarations: Declaration[] = [];
+registerExtractor<PropTypeShape>((filePath, code): Declaration<PropTypeShape>[] => {
+  if (!/\.[cm]?[jt]sx?$/.test(filePath)) return [];
 
-  // Parse the file content into a Babel AST (supports TypeScript & JSX)
-  const ast = parse(fileText, {
-    sourceType: 'module',
-    plugins: ['typescript', 'jsx'],
-  });
+  const declarations: Declaration<PropTypeShape>[] = [];
+  const ast = parse(code, { sourceType: 'module', plugins: ['typescript', 'jsx'] });
 
-  // Traverse AST to find PropTypes assignments
   traverse(ast, {
-    AssignmentExpression(path: {
-      node: { left: any; right: any };
-      scope: { generateUid: () => any };
-    }) {
-      const left = path.node.left;
-      const right = path.node.right;
+    AssignmentExpression(path: NodePath<t.AssignmentExpression>) {
+      const { left, right } = path.node;
 
-      // Identify patterns like MyComponent.propTypes = { ... }
       if (
         t.isMemberExpression(left) &&
         t.isIdentifier(left.property, { name: 'propTypes' }) &&
         t.isObjectExpression(right)
       ) {
-        // Determine component name from the left-hand side object
-        const compName = t.isIdentifier(left.object) ? left.object.name : path.scope.generateUid();
+        const component = t.isIdentifier(left.object)
+          ? left.object.name
+          : path.scope.generateUidIdentifier('Comp').name;
 
-        // Collect each property in the object expression
-        const props: Record<string, any> = {};
-        right.properties.forEach(propNode => {
-          if (
-            t.isObjectProperty(propNode) &&
-            t.isIdentifier(propNode.key) &&
-            t.isExpression(propNode.value)
-          ) {
-            props[propNode.key.name] = normalizePropType(propNode.value);
+        const props: Record<string, unknown> = {};
+        right.properties.forEach(p => {
+          if (t.isObjectProperty(p) && t.isIdentifier(p.key) && t.isExpression(p.value)) {
+            props[p.key.name] = normalise(p.value);
           }
         });
 
-        // Emit a declaration for this component's PropTypes
         declarations.push({
-          id: `${filePath}#prop-types:${compName}`,
+          id: `${filePath}#prop-types:${component}`,
           kind: 'prop-types',
-          shape: { kind: 'PropTypes', props } as PropTypeShape,
-          location: { file: filePath, name: compName },
+          shape: { kind: 'PropTypes', props },
+          location: { file: filePath, name: component },
         });
       }
+    },
+
+    VariableDeclarator(path: NodePath<t.VariableDeclarator>) {
+      if (!t.isIdentifier(path.node.id) || !t.isObjectExpression(path.node.init)) return;
+
+      const component = path.node.id.name;
+      const obj = path.node.init;
+
+      // Quick check: does at least one property reference PropTypes?
+      const hasPropTypes = obj.properties.some(
+        (p: t.ObjectMember | t.SpreadElement) =>
+          t.isObjectProperty(p) &&
+          t.isExpression(p.value) &&
+          t.isMemberExpression(p.value) &&
+          t.isIdentifier(p.value.object, { name: 'PropTypes' })
+      );
+
+      if (!hasPropTypes) return;
+
+      const props: Record<string, unknown> = {};
+      obj.properties.forEach((p: t.ObjectMember | t.SpreadElement) => {
+        if (t.isObjectProperty(p) && t.isIdentifier(p.key) && t.isExpression(p.value)) {
+          props[p.key.name] = normalise(p.value);
+        }
+      });
+
+      declarations.push({
+        id: `${filePath}#prop-types:${component}`,
+        kind: 'prop-types',
+        shape: { kind: 'PropTypes', props },
+        location: { file: filePath, name: component },
+      });
     },
   });
 
