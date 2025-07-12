@@ -4,6 +4,7 @@ import { collectDeclarations } from './collectDeclarations.js';
 import { groupDeclarations } from './groupDeclarations.js';
 import { writeFixFile } from './writeFixFile.js';
 import type { CoreOptions, DupGroup } from './types.js';
+import ProgressBar from 'cli-progress';
 
 /**
  * Main orchestrator for dry-lint.
@@ -22,19 +23,44 @@ export async function findDuplicates(
   filePaths: string[],
   opts: CoreOptions = {}
 ): Promise<DupGroup[]> {
-  const { threshold = 1, cache = true, json = false, sarif = false, fix = false, outFile } = opts;
+  const {
+    threshold = 1,
+    cache = true,
+    json = false,
+    sarif = false,
+    fix = false,
+    outFile,
+    progress,
+  } = opts;
 
-  const files = filePaths.flatMap(fp => {
+  const showBar = progress !== false && !json && !sarif && process.stdout.isTTY;
+
+  const bar = showBar
+    ? new ProgressBar.SingleBar(
+        { format: 'Scanning [{bar}] {percentage}% | {value}/{total} files' },
+        ProgressBar.Presets.shades_classic
+      )
+    : null;
+
+  const files: { path: string; text: string }[] = [];
+  bar?.start(filePaths.length, 0);
+
+  for (const fp of filePaths) {
     const mtime = fs.statSync(fp).mtimeMs;
     const key = cacheKey(fp, mtime);
-    const cached = cache ? readCache<true>(key) : null;
-    if (cached) return [];
+    const isCached = cache && readCache<boolean>(key);
 
-    const text = fs.readFileSync(fp, 'utf8');
-    writeCache(key, true);
-    return [{ path: fp, text }];
-  });
+    if (!isCached) {
+      const text = fs.readFileSync(fp, 'utf8');
+      writeCache(key, true);
+      files.push({ path: fp, text });
+    }
 
+    bar?.increment();
+  }
+
+  bar?.stop();
+  
   const decls = await collectDeclarations(files);
   const groups = groupDeclarations(decls, threshold);
 
@@ -77,9 +103,7 @@ export async function findDuplicates(
     }
   }
 
-  if (fix && outFile) {
-    writeFixFile(groups, outFile);
-  }
+  if (fix && outFile) writeFixFile(groups, outFile);
 
   return groups;
 }

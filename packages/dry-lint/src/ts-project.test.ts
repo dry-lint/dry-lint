@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { getProject } from './ts-project.js';
 import { Project } from 'ts-morph';
 
