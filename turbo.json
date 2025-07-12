@@ -8,10 +8,10 @@
       "inputs": []
     },
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["clean", "^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**"],
-      "env": ["XDG_CACHE_HOME"]
+      "outputs": ["dist/**", "tsconfig.tsbuildinfo"],
+      "env": ["NODE_ENV", "XDG_CACHE_HOME"]
     },
     "check-types": {
       "dependsOn": ["^check-types"],
