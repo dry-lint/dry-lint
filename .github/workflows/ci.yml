@@ -13,6 +13,9 @@ jobs:
       artifact-name: build-output
 
     steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
       - name: Setup Node & Bun
         uses: ./.github/actions/setup-node-bun
         with:
@@ -41,6 +44,9 @@ jobs:
         node: [ 20, 22, 24 ]
 
     steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
       - name: Setup Node & Bun
         uses: ./.github/actions/setup-node-bun
         with:
@@ -102,6 +108,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+        
       - name: Setup Node & Bun
         uses: ./.github/actions/setup-node-bun
         with:

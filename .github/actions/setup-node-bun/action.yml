@@ -19,9 +19,6 @@ jobs:
     outputs:
       cache-hit: ${{ steps.cache.outputs.cache-hit }}
     steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
